@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  WORKER
+}
+
+enum MovementType {
+  INBOUND    // надходження товару на склад
+  OUTBOUND   // відвантаження зі складу
+  ADJUSTMENT // коригування за результатами інвентаризації (кількість зі знаком +/-)
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      Role     @default(WORKER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movements StockMovement[]
+
+  @@map("users")
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Supplier {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  email     String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@map("suppliers")
+}
+
+model Warehouse {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  location  String
+  capacity  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stocks    Stock[]
+  movements StockMovement[]
+
+  @@map("warehouses")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  sku         String   @unique
+  name        String
+  description String?
+  unit        String   @default("шт")
+  price       Decimal  @db.Decimal(10, 2)
+  minStock    Int      @default(0)
+  isActive    Boolean  @default(true)
+  categoryId  Int
+  supplierId  Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category  Category        @relation(fields: [categoryId], references: [id])
+  supplier  Supplier?       @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  stocks    Stock[]
+  movements StockMovement[]
+
+  @@index([categoryId])
+  @@index([supplierId])
+  @@map("products")
+}
+
+// Проміжна таблиця зв'язку «багато-до-багатьох» Product <-> Warehouse.
+// Зберігає поточний залишок конкретного товару на конкретному складі.
+model Stock {
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  warehouseId Int
+  quantity    Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, warehouseId])
+  @@map("stocks")
+}
+
+// Журнал руху товарів (незмінний): кожна операція змінює залишок у Stock.
+model StockMovement {
+  id          Int          @id @default(autoincrement())
+  type        MovementType
+  quantity    Int
+  note        String?
+  productId   Int
+  warehouseId Int
+  userId      Int
+  createdAt   DateTime     @default(now())
+
+  product   Product   @relation(fields: [productId], references: [id])
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([productId])
+  @@index([warehouseId])
+  @@index([createdAt])
+  @@map("stock_movements")
+}
