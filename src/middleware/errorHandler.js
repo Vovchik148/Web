@@ -24,6 +24,14 @@ const errorHandler = (error, req, res, next) => {
     return respond(res, 400, "Некоректний JSON у тілі запиту");
   }
 
+  if (error.name === "MulterError") {
+    return respond(
+      res,
+      400,
+      error.code === "LIMIT_FILE_SIZE" ? "Файл занадто великий" : "Помилка завантаження файлу",
+    );
+  }
+
   // Помилки Prisma
   if (error.code === "P2002") {
     const fields = [].concat(error.meta?.target || []).join(", ");

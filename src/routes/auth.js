@@ -8,8 +8,8 @@ const router = express.Router();
 
 const passwordRule = (field) =>
   body(field)
-    .isLength({ min: 6, max: 72 })
-    .withMessage("Пароль має містити від 6 до 72 символів")
+    .isLength({ min: 8, max: 72 })
+    .withMessage("Пароль має містити від 8 до 72 символів")
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage("Пароль має містити малу літеру, велику літеру та цифру");
 
@@ -34,6 +34,8 @@ const changePasswordRules = [
 // Публічні
 router.post("/register", registerRules, validate, ctrl.register);
 router.post("/login", loginRules, validate, ctrl.login);
+router.post("/refresh", ctrl.refresh);
+router.post("/logout", ctrl.logout);
 
 // Потребують авторизації
 router.get("/profile", authenticate, ctrl.getProfile);

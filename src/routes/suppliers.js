@@ -1,7 +1,8 @@
 import express from "express";
 import { body } from "express-validator";
 import ctrl from "../controllers/supplierController.js";
-import { authenticate, authorize } from "../middleware/auth.js";
+import { authenticate} from "../middleware/auth.js";
+import { authorize } from "../middleware/authorize.js";
 import validate from "../middleware/validate.js";
 import { idParam, maybe, paginationRules, searchRule } from "../utils/validators.js";
 
