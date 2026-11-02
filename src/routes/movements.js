@@ -1,9 +1,9 @@
-const express = require("express");
-const { body, query } = require("express-validator");
-const ctrl = require("../controllers/stockController");
-const { authenticate } = require("../middleware/auth");
-const validate = require("../middleware/validate");
-const { idParam, paginationRules } = require("../utils/validators");
+import express from "express";
+import { body, query } from "express-validator";
+import * as ctrl from "../controllers/stockController.js";
+import { authenticate } from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
+import { idParam, paginationRules } from "../utils/validators.js";
 
 const router = express.Router();
 
@@ -48,4 +48,4 @@ router.get("/", listRules, validate, ctrl.getMovements);
 router.get("/:id", idParam(), validate, ctrl.getMovementById);
 router.post("/", createRules, validate, ctrl.createMovement);
 
-module.exports = router;
+export default router;

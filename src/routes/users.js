@@ -1,9 +1,9 @@
-const express = require("express");
-const { body, query } = require("express-validator");
-const ctrl = require("../controllers/userController");
-const { authenticate, authorize } = require("../middleware/auth");
-const validate = require("../middleware/validate");
-const { idParam, paginationRules, searchRule } = require("../utils/validators");
+import express from "express";
+import { body, query } from "express-validator";
+import * as ctrl from "../controllers/userController.js";
+import { authenticate, authorize } from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
+import { idParam, paginationRules, searchRule } from "../utils/validators.js";
 
 const router = express.Router();
 
@@ -27,4 +27,4 @@ router.put(
   ctrl.update,
 );
 
-module.exports = router;
+export default router;

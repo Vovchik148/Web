@@ -1,4 +1,4 @@
-const ApiError = require("./ApiError");
+import ApiError from "./ApiError.js";
 
 // P2003 (порушення зовнішнього ключа) при видаленні означає, що запис ще використовується
 const safeDelete = async (action, entity) => {
@@ -15,4 +15,4 @@ const safeDelete = async (action, entity) => {
   }
 };
 
-module.exports = safeDelete;
+export default safeDelete;

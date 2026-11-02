@@ -1,4 +1,4 @@
-const { param, query } = require("express-validator");
+import { param, query } from "express-validator";
 
 // Перевірка та перетворення :id у число
 const idParam = (name = "id") =>
@@ -21,4 +21,4 @@ const searchRule = query("search")
   .isLength({ max: 100 })
   .withMessage("search не довший за 100 символів");
 
-module.exports = { idParam, maybe, paginationRules, searchRule };
+export { idParam, maybe, paginationRules, searchRule };

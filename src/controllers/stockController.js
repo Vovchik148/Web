@@ -1,10 +1,10 @@
-const { matchedData } = require("express-validator");
-const stockModel = require("../models/stock");
-const productModel = require("../models/product");
-const { serialize: serializeProduct } = require("./productController");
-const ApiError = require("../utils/ApiError");
-const asyncHandler = require("../utils/asyncHandler");
-const { parsePagination, buildPagination } = require("../utils/pagination");
+import { matchedData } from "express-validator";
+import stockModel from "../models/stock.js";
+import productModel from "../models/product.js";
+import { serialize as serializeProduct } from "./productController.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
+import { parsePagination, buildPagination } from "../utils/pagination.js";
 
 // GET /api/stock - поточні залишки (фільтр за товаром / складом)
 const getStocks = asyncHandler(async (req, res) => {
@@ -72,4 +72,4 @@ const createMovement = asyncHandler(async (req, res) => {
   res.status(201).json(movement);
 });
 
-module.exports = { getStocks, getLowStock, getMovements, getMovementById, createMovement };
+export { getStocks, getLowStock, getMovements, getMovementById, createMovement };

@@ -1,5 +1,5 @@
-const createCrudController = require("./crudController");
-const model = require("../models/supplier");
-const { supplierSerializer } = require("./serializers");
+import createCrudController from "./crudController.js";
+import model from "../models/supplier.js";
+import { supplierSerializer } from "./serializers.js";
 
-module.exports = createCrudController({ model, entity: "Постачальника", serialize: supplierSerializer });
+export default createCrudController({ model, entity: "Постачальника", serialize: supplierSerializer });

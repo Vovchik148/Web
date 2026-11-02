@@ -1,6 +1,6 @@
-const createBaseModel = require("./baseModel");
+import createBaseModel from "./baseModel.js";
 
-module.exports = createBaseModel("warehouse", {
+export default createBaseModel("warehouse", {
   include: { _count: { select: { stocks: true } } },
   orderBy: { name: "asc" },
   searchFields: ["name", "location"],

@@ -1,9 +1,9 @@
-const express = require("express");
-const { query } = require("express-validator");
-const ctrl = require("../controllers/stockController");
-const { authenticate } = require("../middleware/auth");
-const validate = require("../middleware/validate");
-const { paginationRules } = require("../utils/validators");
+import express from "express";
+import { query } from "express-validator";
+import * as ctrl from "../controllers/stockController.js";
+import { authenticate } from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
+import { paginationRules } from "../utils/validators.js";
 
 const router = express.Router();
 
@@ -17,4 +17,4 @@ router.get("/", [...paginationRules, intQuery("productId"), intQuery("warehouseI
 // Важливо: /low оголошений до можливих параметричних маршрутів
 router.get("/low", ctrl.getLowStock);
 
-module.exports = router;
+export default router;

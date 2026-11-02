@@ -1,8 +1,8 @@
-const { matchedData } = require("express-validator");
-const productModel = require("../models/product");
-const ApiError = require("../utils/ApiError");
-const asyncHandler = require("../utils/asyncHandler");
-const { parsePagination, buildPagination } = require("../utils/pagination");
+import { matchedData } from "express-validator";
+import productModel from "../models/product.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
+import { parsePagination, buildPagination } from "../utils/pagination.js";
 
 // Додає totalQuantity - сумарний залишок по всіх складах
 const serialize = (product, { withStocks = false } = {}) => {
@@ -55,4 +55,4 @@ const remove = asyncHandler(async (req, res) => {
   res.status(204).send();
 });
 
-module.exports = { getAll, getById, create, update, remove, serialize };
+export { getAll, getById, create, update, remove, serialize };

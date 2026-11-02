@@ -4,8 +4,6 @@ const withCount = (field, alias) => (item) => {
   return { ...rest, [alias]: _count ? _count[field] : 0 };
 };
 
-module.exports = {
-  categorySerializer: withCount("products", "productCount"),
-  supplierSerializer: withCount("products", "productCount"),
-  warehouseSerializer: withCount("stocks", "stockItemsCount"),
-};
+export const categorySerializer = withCount("products", "productCount");
+export const supplierSerializer = withCount("products", "productCount");
+export const warehouseSerializer = withCount("stocks", "stockItemsCount");

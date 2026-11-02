@@ -1,9 +1,9 @@
-const bcrypt = require("bcryptjs");
-const { matchedData } = require("express-validator");
-const userModel = require("../models/user");
-const ApiError = require("../utils/ApiError");
-const asyncHandler = require("../utils/asyncHandler");
-const { signToken } = require("../utils/token");
+import bcrypt from "bcryptjs";
+import { matchedData } from "express-validator";
+import userModel from "../models/user.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
+import { signToken } from "../utils/token.js";
 
 const SALT_ROUNDS = 12;
 
@@ -60,4 +60,4 @@ const changePassword = asyncHandler(async (req, res) => {
   res.json({ message: "Пароль змінено" });
 });
 
-module.exports = { register, login, getProfile, updateProfile, changePassword };
+export { register, login, getProfile, updateProfile, changePassword };

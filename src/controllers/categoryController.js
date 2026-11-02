@@ -1,5 +1,5 @@
-const createCrudController = require("./crudController");
-const model = require("../models/category");
-const { categorySerializer } = require("./serializers");
+import createCrudController from "./crudController.js";
+import model from "../models/category.js";
+import { categorySerializer } from "./serializers.js";
 
-module.exports = createCrudController({ model, entity: "Категорію", serialize: categorySerializer });
+export default createCrudController({ model, entity: "Категорію", serialize: categorySerializer });

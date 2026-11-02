@@ -1,5 +1,5 @@
-const prisma = require("../utils/prisma");
-const ApiError = require("../utils/ApiError");
+import { prisma } from "../db.js";
+import ApiError from "../utils/ApiError.js";
 
 const movementInclude = {
   product: { select: { id: true, sku: true, name: true } },
@@ -7,7 +7,7 @@ const movementInclude = {
   user: { select: { id: true, firstName: true, lastName: true } },
 };
 
-module.exports = {
+export default {
   // ---- Залишки ----
   findStocks: ({ where, skip, take }) =>
     prisma.stock.findMany({

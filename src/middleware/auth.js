@@ -1,8 +1,8 @@
-const jwt = require("jsonwebtoken");
-const config = require("../utils/config");
-const prisma = require("../utils/prisma");
-const ApiError = require("../utils/ApiError");
-const asyncHandler = require("../utils/asyncHandler");
+import jwt from "jsonwebtoken";
+import config from "../utils/config.js";
+import { prisma } from "../db.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 // Перевіряє JWT з заголовка Authorization: Bearer <token>
 const authenticate = asyncHandler(async (req, res, next) => {
@@ -32,4 +32,4 @@ const authorize =
     next();
   };
 
-module.exports = { authenticate, authorize };
+export { authenticate, authorize };

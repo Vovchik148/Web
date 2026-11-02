@@ -1,4 +1,4 @@
-require("dotenv").config();
+import "dotenv/config";
 
 // Перевіряємо обов'язкові змінні середовища при старті, щоб помилка була зрозумілою
 const required = ["DATABASE_URL", "JWT_SECRET"];
@@ -10,7 +10,7 @@ if (missing.length > 0) {
   );
 }
 
-module.exports = {
+export default {
   port: Number(process.env.PORT) || 3000,
   nodeEnv: process.env.NODE_ENV || "development",
   jwtSecret: process.env.JWT_SECRET,

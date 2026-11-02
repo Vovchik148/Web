@@ -1,8 +1,8 @@
-const { matchedData } = require("express-validator");
-const userModel = require("../models/user");
-const ApiError = require("../utils/ApiError");
-const asyncHandler = require("../utils/asyncHandler");
-const { parsePagination, buildPagination } = require("../utils/pagination");
+import { matchedData } from "express-validator";
+import userModel from "../models/user.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
+import { parsePagination, buildPagination } from "../utils/pagination.js";
 
 // GET /api/users (ADMIN)
 const getAll = asyncHandler(async (req, res) => {
@@ -38,4 +38,4 @@ const update = asyncHandler(async (req, res) => {
   res.json(await userModel.update(req.params.id, data));
 });
 
-module.exports = { getAll, update };
+export { getAll, update };

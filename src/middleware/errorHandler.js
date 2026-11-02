@@ -1,6 +1,6 @@
-const { STATUS_CODES } = require("http");
-const config = require("../utils/config");
-const ApiError = require("../utils/ApiError");
+import { STATUS_CODES } from "node:http";
+import config from "../utils/config.js";
+import ApiError from "../utils/ApiError.js";
 
 const respond = (res, status, message, details) =>
   res.status(status).json({
@@ -53,4 +53,4 @@ const errorHandler = (error, req, res, next) => {
   );
 };
 
-module.exports = errorHandler;
+export default errorHandler;

@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -31,6 +31,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   movements StockMovement[]
+  files File[]
+  refreshTokens RefreshToken[]
 
   @@map("users")
 }
@@ -134,4 +136,31 @@ model StockMovement {
   @@index([warehouseId])
   @@index([createdAt])
   @@map("stock_movements")
+}
+
+model File {
+  id           Int      @id @default(autoincrement())
+  filename     String
+  originalName String
+  mimetype     String
+  size         Int
+  path         String
+  uploadedBy   Int
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@index([uploadedBy])
+  @@map("files")
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  tokenHash String    @unique
+  userId    Int
+  expiresAt DateTime
+  revokedAt DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
 }

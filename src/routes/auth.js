@@ -1,8 +1,8 @@
-const express = require("express");
-const { body } = require("express-validator");
-const ctrl = require("../controllers/authController");
-const { authenticate } = require("../middleware/auth");
-const validate = require("../middleware/validate");
+import express from "express";
+import { body } from "express-validator";
+import * as ctrl from "../controllers/authController.js";
+import { authenticate } from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
 
 const router = express.Router();
 
@@ -40,4 +40,4 @@ router.get("/profile", authenticate, ctrl.getProfile);
 router.put("/profile", authenticate, profileRules, validate, ctrl.updateProfile);
 router.put("/change-password", authenticate, changePasswordRules, validate, ctrl.changePassword);
 
-module.exports = router;
+export default router;

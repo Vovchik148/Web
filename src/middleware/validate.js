@@ -1,5 +1,5 @@
-const { validationResult } = require("express-validator");
-const ApiError = require("../utils/ApiError");
+import { validationResult } from "express-validator";
+import ApiError from "../utils/ApiError.js";
 
 // Збирає помилки, знайдені ланцюжками express-validator, в одну 400-відповідь
 const validate = (req, res, next) => {
@@ -10,4 +10,4 @@ const validate = (req, res, next) => {
   throw new ApiError(400, "Помилка валідації вхідних даних", details);
 };
 
-module.exports = validate;
+export default validate;

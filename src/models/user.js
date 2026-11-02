@@ -1,4 +1,4 @@
-const prisma = require("../utils/prisma");
+import { prisma } from "../db.js";
 
 // Поля, які можна віддавати клієнту (без пароля)
 const publicSelect = {
@@ -12,7 +12,7 @@ const publicSelect = {
   updatedAt: true,
 };
 
-module.exports = {
+export default {
   findByEmail: (email) => prisma.user.findUnique({ where: { email } }),
 
   // З хешем пароля - лише для перевірки/зміни пароля

@@ -1,5 +1,5 @@
-const prisma = require("../utils/prisma");
-const safeDelete = require("../utils/safeDelete");
+import { prisma } from "../db.js";
+import safeDelete from "../utils/safeDelete.js";
 
 // Фабрика CRUD-моделі для простих сутностей (Category, Supplier, Warehouse).
 // Уся робота з БД через Prisma ORM зосереджена тут, а не в контролерах.
@@ -30,4 +30,4 @@ const createBaseModel = (
   };
 };
 
-module.exports = createBaseModel;
+export default createBaseModel;

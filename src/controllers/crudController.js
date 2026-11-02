@@ -1,7 +1,7 @@
-const { matchedData } = require("express-validator");
-const ApiError = require("../utils/ApiError");
-const asyncHandler = require("../utils/asyncHandler");
-const { parsePagination, buildPagination } = require("../utils/pagination");
+import { matchedData } from "express-validator";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
+import { parsePagination, buildPagination } from "../utils/pagination.js";
 
 // Фабрика контролерів для простих сутностей. Контролер не знає про Prisma -
 // він лише приймає запит, викликає модель і формує HTTP-відповідь.
@@ -41,4 +41,4 @@ const createCrudController = ({ model, entity, serialize = (item) => item }) => 
   }),
 });
 
-module.exports = createCrudController;
+export default createCrudController;

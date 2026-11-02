@@ -1,12 +1,12 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
 
-const config = require("./utils/config"); // завантажує .env і перевіряє обов'язкові змінні
-const prisma = require("./utils/prisma");
-const ApiError = require("./utils/ApiError");
-const routes = require("./routes");
-const errorHandler = require("./middleware/errorHandler");
+import config from "./utils/config.js"; // завантажує .env і перевіряє обов'язкові змінні
+import { prisma } from "./db.js";
+import ApiError from "./utils/ApiError.js";
+import routes from "./routes/index.js";
+import errorHandler from "./middleware/errorHandler.js";
 
 const app = express();
 
@@ -42,8 +42,9 @@ app.use((req, res, next) => {
 });
 app.use(errorHandler);
 
-// Запускаємо сервер лише коли файл виконано напряму (не при require у тестах)
-if (require.main === module) {
+// Запускаємо сервер лише коли файл виконано напряму (не при імпорті в тестах).
+// У ESM немає require.main, замість нього import.meta.main (Node 24). Блок піде в server.js на кроці 10.
+if (import.meta.main) {
   const server = app.listen(config.port, () => {
     console.log(`🚀 Server running on port ${config.port} (${config.nodeEnv})`);
     console.log(`📍 http://localhost:${config.port}`);
@@ -59,4 +60,4 @@ if (require.main === module) {
   process.on("SIGTERM", shutdown);
 }
 
-module.exports = app;
+export default app;

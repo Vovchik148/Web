@@ -1,5 +1,5 @@
-const prisma = require("../utils/prisma");
-const safeDelete = require("../utils/safeDelete");
+import { prisma } from "../db.js";
+import safeDelete from "../utils/safeDelete.js";
 
 const listInclude = {
   category: { select: { id: true, name: true } },
@@ -15,7 +15,7 @@ const detailInclude = {
   },
 };
 
-module.exports = {
+export default {
   findMany: ({ where, skip, take, orderBy }) =>
     prisma.product.findMany({ where, include: listInclude, skip, take, orderBy }),
 

@@ -2,14 +2,15 @@
   "name": "warehouse-inventory-backend",
   "version": "1.0.0",
   "description": "Backend API для системи обліку інвентарю на складі",
-  "main": "src/app.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js",
+    "start": "node src/server.js",
+    "dev": "node --env-file=.env --watch src/server.js",
+    "test": "node --env-file=.env --test \"tests/**/*.test.js\"",
+    "db:seed": "node --env-file=.env prisma/seed.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset"
   },
@@ -24,22 +25,28 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^6.19.3",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "argon2": "^0.45.1",
+    "cors": "^2.8.6",
     "dotenv": "^16.6.1",
-    "express": "^4.21.2",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.2",
     "express-validator": "^7.2.1",
     "helmet": "^7.2.0",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.5.0",
+    "pg": "^8.23.1",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10",
-    "prisma": "^6.19.3"
+    "prisma": "^7.10.1",
+    "supertest": "^7.3.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=24"
   },
   "author": "",
-  "type": "commonjs"
+  "type": "module"
 }

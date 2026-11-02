@@ -1,9 +1,9 @@
-const express = require("express");
-const { body } = require("express-validator");
-const ctrl = require("../controllers/supplierController");
-const { authenticate, authorize } = require("../middleware/auth");
-const validate = require("../middleware/validate");
-const { idParam, maybe, paginationRules, searchRule } = require("../utils/validators");
+import express from "express";
+import { body } from "express-validator";
+import ctrl from "../controllers/supplierController.js";
+import { authenticate, authorize } from "../middleware/auth.js";
+import validate from "../middleware/validate.js";
+import { idParam, maybe, paginationRules, searchRule } from "../utils/validators.js";
 
 const router = express.Router();
 
@@ -32,4 +32,4 @@ router.post("/", authorize("ADMIN", "MANAGER"), supplierRules(), validate, ctrl.
 router.put("/:id", authorize("ADMIN", "MANAGER"), idParam(), supplierRules(true), validate, ctrl.update);
 router.delete("/:id", authorize("ADMIN"), idParam(), validate, ctrl.remove);
 
-module.exports = router;
+export default router;

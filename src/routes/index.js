@@ -1,6 +1,15 @@
-const express = require("express");
-const prisma = require("../utils/prisma");
-const asyncHandler = require("../utils/asyncHandler");
+import express from "express";
+import { prisma } from "../db.js";
+import asyncHandler from "../utils/asyncHandler.js";
+
+import authRoutes from "./auth.js";
+import userRoutes from "./users.js";
+import categoryRoutes from "./categories.js";
+import supplierRoutes from "./suppliers.js";
+import warehouseRoutes from "./warehouses.js";
+import productRoutes from "./products.js";
+import stockRoutes from "./stock.js";
+import movementRoutes from "./movements.js";
 
 const router = express.Router();
 
@@ -12,13 +21,13 @@ router.get(
   }),
 );
 
-router.use("/auth", require("./auth"));
-router.use("/users", require("./users"));
-router.use("/categories", require("./categories"));
-router.use("/suppliers", require("./suppliers"));
-router.use("/warehouses", require("./warehouses"));
-router.use("/products", require("./products"));
-router.use("/stock", require("./stock"));
-router.use("/movements", require("./movements"));
+router.use("/auth", authRoutes);
+router.use("/users", userRoutes);
+router.use("/categories", categoryRoutes);
+router.use("/suppliers", supplierRoutes);
+router.use("/warehouses", warehouseRoutes);
+router.use("/products", productRoutes);
+router.use("/stock", stockRoutes);
+router.use("/movements", movementRoutes);
 
-module.exports = router;
+export default router;
