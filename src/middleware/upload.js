@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import multer from 'multer';
-import ApiError from "./utils/ApiError.js";
+import ApiError from "../utils/ApiError.js";
 
 const uploadDir = process.env.UPLOAD_DIR || 'uploads';
 fs.mkdirSync(uploadDir, { recursive: true });

@@ -29,4 +29,4 @@ const authenticate = asyncHandler(async (req, res, next) => {
   next();
 });
 
-export { authenticate, authorize };
+export { authenticate };

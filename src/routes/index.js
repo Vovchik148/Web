@@ -1,7 +1,7 @@
 import express from "express";
 import { prisma } from "../db.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import fileRoutes from "./fileRoutes.js";
+import fileRoutes from "../controllers/fileRoutes.js";
 
 import authRoutes from "./auth.js";
 import userRoutes from "./users.js";
