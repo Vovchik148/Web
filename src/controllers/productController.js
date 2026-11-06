@@ -12,7 +12,7 @@ const serialize = (product, { withStocks = false } = {}) => {
 };
 
 const getAll = asyncHandler(async (req, res) => {
-  const { search, categoryId, supplierId, isActive, sortBy = "createdAt", order = "desc" } = req.query;
+  const { search, categoryId, supplierId, isActive, sortBy = "createdAt", order = "desc" } = matchedData(req, { locations: ["query"] });
   const { page, limit, skip } = parsePagination(req.query);
 
   const where = {};

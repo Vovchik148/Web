@@ -8,7 +8,7 @@ import { parsePagination, buildPagination } from "../utils/pagination.js";
 
 // GET /api/stock - поточні залишки (фільтр за товаром / складом)
 const getStocks = asyncHandler(async (req, res) => {
-  const { productId, warehouseId } = req.query;
+  const { productId, warehouseId } = matchedData(req, { locations: ["query"] });
   const { page, limit, skip } = parsePagination(req.query);
 
   const where = {};
@@ -37,7 +37,7 @@ const getLowStock = asyncHandler(async (req, res) => {
 
 // GET /api/movements - журнал руху з фільтрами
 const getMovements = asyncHandler(async (req, res) => {
-  const { productId, warehouseId, userId, type, from, to } = req.query;
+  const { productId, warehouseId, userId, type, from, to } = matchedData(req, { locations: ["query"] });
   const { page, limit, skip } = parsePagination(req.query);
 
   const where = {};

@@ -7,7 +7,7 @@ import { parsePagination, buildPagination } from "../utils/pagination.js";
 // він лише приймає запит, викликає модель і формує HTTP-відповідь.
 const createCrudController = ({ model, entity, serialize = (item) => item }) => ({
   getAll: asyncHandler(async (req, res) => {
-    const { search } = req.query;
+    const { search } = matchedData(req, { locations: ["query"] });
     const { page, limit, skip } = parsePagination(req.query);
 
     const [items, total] = await Promise.all([

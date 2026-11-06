@@ -6,7 +6,6 @@ import ApiError from "./utils/ApiError.js";
 const uploadDir = process.env.UPLOAD_DIR || 'uploads';
 fs.mkdirSync(uploadDir, { recursive: true });
 
-// Дозволені типи: MIME-тип і розширення мають збігатися
 const allowedTypes = new Map([
   ['image/jpeg', ['.jpg', '.jpeg']],
   ['image/png', ['.png']],

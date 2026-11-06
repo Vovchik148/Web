@@ -1,8 +1,5 @@
-require("dotenv").config();
-const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcryptjs");
-
-const prisma = new PrismaClient();
+import { prisma } from "../src/db.js";
+import { hashPassword } from "../src/utils/password.js";
 
 async function main() {
   console.log("🌱 Заповнення бази тестовими даними...");
@@ -21,7 +18,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: "admin@warehouse.com",
-        password: await bcrypt.hash("Admin123", 12),
+        password: await hashPassword("Admin123"),
         firstName: "Олег",
         lastName: "Адміненко",
         role: "ADMIN",
@@ -30,7 +27,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: "manager@warehouse.com",
-        password: await bcrypt.hash("Manager123", 12),
+        password: await hashPassword("Manager123"),
         firstName: "Марія",
         lastName: "Коваленко",
         role: "MANAGER",
@@ -39,7 +36,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: "worker@warehouse.com",
-        password: await bcrypt.hash("Worker123", 12),
+        password: await hashPassword("Worker123"),
         firstName: "Іван",
         lastName: "Петренко",
         role: "WORKER",
@@ -94,7 +91,7 @@ async function main() {
     [0, mainWh, 120], [0, reserveWh, 40],
     [1, mainWh, 8],   // нижче minStock (10) - потрапить у /api/stock/low
     [2, mainWh, 200],
-    [3, mainWh, 15],  [3, reserveWh, 4],
+    [3, mainWh, 15], [3, reserveWh, 4],
     [4, mainWh, 300],
   ];
 

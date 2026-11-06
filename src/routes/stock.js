@@ -12,9 +12,40 @@ const intQuery = (name) =>
 
 router.use(authenticate);
 
+/**
+ * @swagger
+ * /api/stock:
+ *   get:
+ *     summary: Залишки товарів на складах
+ *     tags: [Stock]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - { in: query, name: page, schema: { type: integer, minimum: 1 } }
+ *       - { in: query, name: limit, schema: { type: integer, minimum: 1 } }
+ *       - { in: query, name: productId, schema: { type: integer, minimum: 1 } }
+ *       - { in: query, name: warehouseId, schema: { type: integer, minimum: 1 } }
+ *     responses:
+ *       200: { description: Список залишків }
+ *       400: { description: Помилка валідації параметрів }
+ *       401: { description: Не авторизовано }
+ */
 router.get("/", [...paginationRules, intQuery("productId"), intQuery("warehouseId")], validate, ctrl.getStocks);
 
 // Важливо: /low оголошений до можливих параметричних маршрутів
+
+/**
+ * @swagger
+ * /api/stock/low:
+ *   get:
+ *     summary: Товари із залишком нижче мінімального
+ *     tags: [Stock]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: Список товарів з низьким залишком }
+ *       401: { description: Не авторизовано }
+ */
 router.get("/low", ctrl.getLowStock);
 
 export default router;

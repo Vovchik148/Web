@@ -6,7 +6,7 @@ import { parsePagination, buildPagination } from "../utils/pagination.js";
 
 // GET /api/users (ADMIN)
 const getAll = asyncHandler(async (req, res) => {
-  const { role, search } = req.query;
+  const { role, search } = matchedData(req, { locations: ["query"] });
   const { page, limit, skip } = parsePagination(req.query);
 
   const where = {};

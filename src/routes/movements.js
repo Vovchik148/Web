@@ -44,8 +44,75 @@ const createRules = [
 // Помилкову операцію виправляють новою операцією ADJUSTMENT.
 router.use(authenticate);
 
+/**
+ * @swagger
+ * /api/movements:
+ *   get:
+ *     summary: Журнал руху товарів
+ *     tags: [Movements]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - { in: query, name: page, schema: { type: integer, minimum: 1 } }
+ *       - { in: query, name: limit, schema: { type: integer, minimum: 1 } }
+ *       - { in: query, name: productId, schema: { type: integer, minimum: 1 } }
+ *       - { in: query, name: warehouseId, schema: { type: integer, minimum: 1 } }
+ *       - { in: query, name: userId, schema: { type: integer, minimum: 1 } }
+ *       - { in: query, name: type, schema: { type: string, enum: [INBOUND, OUTBOUND, ADJUSTMENT] } }
+ *       - { in: query, name: from, schema: { type: string, format: date-time } }
+ *       - { in: query, name: to, schema: { type: string, format: date-time } }
+ *     responses:
+ *       200: { description: Список операцій }
+ *       400: { description: Помилка валідації параметрів }
+ *       401: { description: Не авторизовано }
+ */
 router.get("/", listRules, validate, ctrl.getMovements);
+
+/**
+ * @swagger
+ * /api/movements/{id}:
+ *   get:
+ *     summary: Отримати операцію за id
+ *     tags: [Movements]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer, minimum: 1 } }
+ *     responses:
+ *       200: { description: Операція }
+ *       401: { description: Не авторизовано }
+ *       404: { description: Операцію не знайдено }
+ */
 router.get("/:id", idParam(), validate, ctrl.getMovementById);
+
+/**
+ * @swagger
+ * /api/movements:
+ *   post:
+ *     summary: Створити операцію руху товару (запис незмінний)
+ *     description: INBOUND/OUTBOUND — quantity >= 1; ADJUSTMENT — ненульове значення зі знаком + або -.
+ *     tags: [Movements]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [type, productId, warehouseId, quantity]
+ *             properties:
+ *               type: { type: string, enum: [INBOUND, OUTBOUND, ADJUSTMENT] }
+ *               productId: { type: integer, minimum: 1 }
+ *               warehouseId: { type: integer, minimum: 1 }
+ *               quantity: { type: integer, minimum: -1000000, maximum: 1000000 }
+ *               note: { type: string, maxLength: 255 }
+ *     responses:
+ *       201: { description: Операцію створено }
+ *       400: { description: Помилка валідації даних або недостатньо товару на складі }
+ *       401: { description: Не авторизовано }
+ *       404: { description: Товар або склад не знайдено }
+ */
 router.post("/", createRules, validate, ctrl.createMovement);
 
 export default router;

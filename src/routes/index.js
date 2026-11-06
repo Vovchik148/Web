@@ -1,6 +1,7 @@
 import express from "express";
 import { prisma } from "../db.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import fileRoutes from "./fileRoutes.js";
 
 import authRoutes from "./auth.js";
 import userRoutes from "./users.js";
@@ -13,10 +14,20 @@ import movementRoutes from "./movements.js";
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Перевірка стану сервера та підключення до БД
+ *     tags: [Health]
+ *     responses:
+ *       200: { description: Сервер працює, база даних підключена }
+ *       500: { description: Помилка підключення до бази даних }
+ */
 router.get(
   "/health",
   asyncHandler(async (req, res) => {
-    await prisma.$queryRaw`SELECT 1`; // перевірка з'єднання з БД
+    await prisma.$queryRaw`SELECT 1`;
     res.json({ status: "ok", database: "connected", uptime: process.uptime() });
   }),
 );
@@ -29,5 +40,5 @@ router.use("/warehouses", warehouseRoutes);
 router.use("/products", productRoutes);
 router.use("/stock", stockRoutes);
 router.use("/movements", movementRoutes);
-
+router.use("/files", fileRoutes);
 export default router;
