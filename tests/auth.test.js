@@ -4,7 +4,7 @@ import request from 'supertest';
 import app from '../src/app.js';
 import { prisma } from '../src/db.js';
 
-const user = { email, password: 'TestPassword123', firstName: 'Test', lastName: 'User' };
+const user = { email: 'test@example.com', password: 'TestPassword123', firstName: 'Test', lastName: 'User' };
 
 describe('Authentication API', () => {
   before(() => prisma.user.deleteMany({ where: { email: user.email } }));
@@ -86,7 +86,7 @@ describe('Authentication API', () => {
 
 describe('Files API', () => {
   let token;
-  const fileUser = { email, password: 'TestPassword123', firstName: 'Test', lastName: 'User' };
+  const fileUser = { email: 'files-test@example.com', password: 'TestPassword123', firstName: 'Test', lastName: 'User' };
   const png = Buffer.from('89504e470d0a1a0a', 'hex');
 
   before(async () => {

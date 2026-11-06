@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 
 import config from "./utils/config.js"; // завантажує .env і перевіряє обов'язкові змінні
-import swaggerSpec from "./config/swagger.js";
+import { swaggerSpecs } from "./config/swagger.js";
 import ApiError from "./utils/ApiError.js";
 import routes from "./routes/index.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -41,7 +41,7 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // --- Документація Swagger ---
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // --- Маршрути ---
 app.get("/", (req, res) => {

@@ -18,13 +18,6 @@ const authenticate = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Користувача не знайдено або його деактивовано");
   }
 
-  try {
-    req.user = verifyAccessToken(authHeader.slice(7));
-    next();
-  } catch {
-    res.status(401).json({ error: 'Недійсний або прострочений токен' });
-  }
-
   req.user = { id: user.id, email: user.email, role: user.role };
   next();
 });
