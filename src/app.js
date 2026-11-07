@@ -27,12 +27,27 @@ app.use(
   "/api/",
   rateLimit({
     windowMs: 15 * 60 * 1000, // 15 хвилин
-    max: 100,
+    limit: 100,
     standardHeaders: true,
     legacyHeaders: false,
     message: {
       status: "error",
       message: "Забагато запитів, спробуйте пізніше",
+    },
+  })
+);
+
+// Суворіший ліміт для ендпоінтів автентифікації - захист від підбору паролів (брутфорсу)
+app.use(
+  "/api/auth/",
+  rateLimit({
+    windowMs: config.authRateLimitWindowMinutes * 60 * 1000,
+    limit: config.authRateLimitMax, // 20 запитів за 15 хвилин за замовчуванням
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      status: "error",
+      message: "Забагато спроб входу, спробуйте пізніше",
     },
   })
 );

@@ -5,63 +5,67 @@
 ## 🚀 Технології
 
 - **Node.js** - серверне середовище JavaScript
-- **Express.js** - веб-фреймворк
+- **Express.js 5** - веб-фреймворк
 - **PostgreSQL** - реляційна база даних
 - **Prisma** - ORM для роботи з базою даних
-- **JWT** - автентифікація та авторизація
-- **bcryptjs** - хешування паролів
+- **JWT (jsonwebtoken)** - автентифікація: короткоживучий access + refresh з ротацією та відкликанням
+- **argon2** - хешування паролів
+- **express-rate-limit** - обмеження кількості запитів
+- **multer** - завантаження файлів
 - **express-validator** - валідація вхідних даних
+- **nodemailer** - надсилання листів (відновлення пароля)
+- **otplib + qrcode** - двофакторна автентифікація (TOTP)
+- **swagger-jsdoc + swagger-ui-express** - документація API
 
 ## 📋 Функціональність
 
-- ✅ Аутентифікація та авторизація користувачів
+- ✅ Аутентифікація та авторизація користувачів (access + refresh токени з ротацією)
+- ✅ Відновлення пароля через email (одноразові токени, у БД лише хеш)
+- ✅ Двофакторна автентифікація (TOTP: Google Authenticator, Authy тощо)
+- ✅ Вхід через GitHub OAuth (без passport, Authorization Code)
 - ✅ Управління категоріями товарів, постачальниками та складами
 - ✅ CRUD операції з товарами
 - ✅ Облік залишків товарів по складах
 - ✅ Журнал руху товарів (надходження, відвантаження, коригування)
 - ✅ Звіт про товари з низьким залишком
-- ✅ Система ролей (адміністратор/менеджер/комірник)
-- ✅ Валідація вхідних даних
-- ✅ Обробка помилок
-- ✅ RESTful API
+- ✅ Завантаження файлів (один або до 10 за раз) з валідацією типу та розміру
+- ✅ Журнал аудиту дій користувачів
+- ✅ Система ролей (адміністратор/менеджер/комірник) + детальні дозволи виду `products:write`
+- ✅ Rate limiting: загальний для API та посилений для автентифікації
+- ✅ Валідація вхідних даних, централізована обробка помилок
+- ✅ Swagger-документація (`/api-docs`)
+- ✅ Тести (node:test + supertest)
 
 ## 🗂 Структура проєкту
 
 ```
 warehouse-backend/
 ├── src/
-│   ├── controllers/          # Контролери
+│   ├── config/              # Конфігурація (permissions, swagger)
+│   ├── controllers/         # Контролери
+│   ├── generated/           # Згенерований Prisma Client (не редагувати)
+│   ├── middleware/          # Проміжні обробники (auth, дозволи, upload, валідація)
 │   ├── models/              # Моделі (робота з БД через Prisma)
 │   ├── routes/              # Маршрути API
-│   ├── middleware/          # Проміжні обробники
-│   ├── utils/               # Допоміжні функції
-│   └── app.js              # Головний файл додатку
+│   ├── utils/               # Допоміжні функції (jwt, mailer, audit, password)
+│   ├── app.js               # Головний файл додатку
+│   └── server.js            # Точка входу
 ├── prisma/
-│   ├── schema.prisma       # Схема бази даних
-│   └── seed.js             # Файл для заповнення тестовими даними
-├── reports/                # Звіти лабораторних робіт
-├── docker-compose.yml      # PostgreSQL у Docker
-├── API_DOCUMENTATION.md    # Докладна документація API
-└── .env                    # Змінні середовища
+│   ├── migrations/          # Міграції бази даних
+│   ├── schema.prisma        # Схема бази даних
+│   └── seed.js              # Файл для заповнення тестовими даними
+├── tests/                   # Тести (node:test + supertest)
+├── reports/                 # Звіти лабораторних робіт
+├── docker-compose.yml       # PostgreSQL у Docker
+├── api_documantion.md       # Докладна документація API
+└── .env.example             # Приклад змінних середовища
 ```
 
 ## 🛠 Встановлення та запуск
 
 ### Вимоги
-- Node.js (версія 18+)
-- npm або yarn
+- Node.js 24+
 - PostgreSQL (версія 12+) або Docker
-
-```bash
-# Ініціалізуємо npm проєкт
-npm init -y
-
-# Встановлюємо основні залежності
-npm install express prisma @prisma/client bcryptjs jsonwebtoken cors helmet dotenv express-validator
-
-# Встановлюємо залежності для розробки
-npm install -D nodemon prisma
-```
 
 ### 1. Клонування репозиторію
 ```bash
@@ -74,15 +78,30 @@ cd warehouse-backend
 npm install
 ```
 
-### 3. Налаштування бази даних
+### 3. Налаштування змінних середовища
 Створіть файл `.env` в корені проєкту (можна скопіювати `.env.example`):
 
 ```env
 DATABASE_URL="postgresql://warehouse_user:warehouse_password@localhost:5432/warehouse_db?schema=public"
-JWT_SECRET="your-super-secret-jwt-key-min-32-chars"
-JWT_EXPIRES_IN="24h"
-PORT=3000
-NODE_ENV=development
+JWT_SECRET=згенерований-секрет-1
+JWT_EXPIRES_IN=15m
+REFRESH_TOKEN_SECRET=згенерований-секрет-2
+REFRESH_TOKEN_EXPIRES_IN=7d
+UPLOAD_DIR=uploads
+MAX_FILE_SIZE=5242880
+FRONTEND_URL=http://localhost:5173
+```
+
+Додатково для рівня 3 (усі є в `.env.example` з коментарями):
+
+```env
+AUTH_RATE_LIMIT_MAX=20            # ліміт запитів до /api/auth за вікно
+AUTH_RATE_LIMIT_WINDOW_MINUTES=15
+TWO_FACTOR_TEMP_TOKEN_EXPIRES_IN=5m
+APP_URL=http://localhost:3000     # зовнішня адреса API (для OAuth)
+# SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS  - реальна пошта;
+# якщо не задані - тестова скринька Ethereal (прев'ю в консолі)
+# GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET - OAuth App з github.com/settings/developers
 ```
 
 Запустіть PostgreSQL у Docker:
@@ -96,7 +115,7 @@ docker compose up -d
 npx prisma generate
 
 # Створення та застосування міграцій
-npx prisma migrate dev --name init
+npx prisma migrate dev
 
 # Заповнення бази тестовими даними
 npm run db:seed
@@ -104,23 +123,38 @@ npm run db:seed
 
 ### 5. Запуск сервера
 ```bash
-
-# Розробка
+# Розробка (з автоперезапуском)
 npm run dev
 
 # Продакшн
 npm start
 ```
 
-Сервер буде доступний за адресою: `http://localhost:3000`
+Сервер буде доступний за адресою: `http://localhost:3000`, Swagger UI: `http://localhost:3000/api-docs`
+
+### 6. Тести
+```bash
+npm test
+```
+Потрібна запущена база даних (тести працюють з реальною БД).
 
 ## 📚 API Endpoints
 
 Повний опис із прикладами відповідей: [api_documantion.md](./api_documantion.md)
 
 ### Аутентифікація
-- `POST /api/auth/register` - Реєстрація користувача
-- `POST /api/auth/login` - Вхід користувача
+- `POST /api/auth/register` - Реєстрація користувача (роль WORKER)
+- `POST /api/auth/login` - Вхід (або запит коду 2FA)
+- `POST /api/auth/refresh` - Оновлення пари токенів (ротація refresh)
+- `POST /api/auth/logout` - Вихід (відкликання refresh-токена)
+- `POST /api/auth/forgot-password` - Запит листа для відновлення пароля
+- `POST /api/auth/reset-password` - Скидання пароля за одноразовим токеном
+- `POST /api/auth/2fa/setup` - Крок 1 увімкнення 2FA (секрет + QR-код)
+- `POST /api/auth/2fa/enable` - Крок 2 увімкнення 2FA (підтвердження кодом)
+- `POST /api/auth/2fa/disable` - Вимкнути 2FA
+- `POST /api/auth/2fa/verify` - Другий крок входу (код 2FA)
+- `GET /api/auth/github` - Вхід через GitHub OAuth (редирект)
+- `GET /api/auth/github/callback` - Callback GitHub OAuth
 - `GET /api/auth/profile` - Отримати профіль (потребує авторизації)
 - `PUT /api/auth/profile` - Оновити профіль (потребує авторизації)
 - `PUT /api/auth/change-password` - Змінити пароль (потребує авторизації)
@@ -166,23 +200,45 @@ npm start
 - `GET /api/movements/:id` - Отримати операцію за ID
 - `POST /api/movements` - Зареєструвати операцію (будь-який авторизований користувач)
 
+### Файли
+- `POST /api/files/upload` - Завантажити файл (поле `file`, до 5 МБ)
+- `POST /api/files/upload-multiple` - Завантажити до 10 файлів (поле `files`)
+- `GET /api/files/:id` - Отримати файл за ID
+- `PUT /api/files/:id` - Замінити файл (власник або адмін)
+- `DELETE /api/files/:id` - Видалити файл (власник або адмін)
+
+### Аудит
+- `GET /api/audit-logs` - Журнал дій користувачів (тільки адмін; пагінація + фільтри)
+
 ## 🔐 Аутентифікація
 
-API використовує JWT токени для аутентифікації. Після успішного входу отримайте токен та додавайте його в заголовок запитів:
+API використовує пару JWT токенів:
 
-```
-Authorization: Bearer <your-jwt-token>
-```
+- **Access токен** (15 хвилин) - передається в заголовку кожного запиту:
+  ```
+  Authorization: Bearer <accessToken>
+  ```
+- **Refresh токен** (7 днів) - для оновлення пари через `POST /api/auth/refresh`. Зберігається в БД у вигляді хеша, тому може бути відкликаний; при кожному оновленні - ротація (старий відкликається). Повторне використання відкликаного токена відкликає **всі** токени користувача.
+
+### Вхід з двофакторною автентифікацією
+Якщо у користувача увімкнено 2FA, `POST /api/auth/login` повертає `twoFactorRequired: true` та короткоживучий `tempToken` (~5 хвилин). Повна пара токенів видається лише після `POST /api/auth/2fa/verify` з кодом з застосунку-аутентифікатора.
 
 ## 👥 Ролі та права
 
-| Дія | ADMIN | MANAGER | WORKER |
+Права описані як дозволи виду `<сутність>:<операція>` у `src/config/permissions.js`; маршрути перевіряють їх через middleware `requirePermission()`.
+
+| Дозвіл | WORKER | MANAGER | ADMIN |
 |---|:-:|:-:|:-:|
-| Перегляд товарів, складів, залишків, журналу | ✅ | ✅ | ✅ |
-| Реєстрація операцій руху товару | ✅ | ✅ | ✅ |
-| Створення/редагування товарів, категорій, постачальників, складів | ✅ | ✅ | ❌ |
-| Видалення записів | ✅ | ❌ | ❌ |
-| Керування користувачами | ✅ | ❌ | ❌ |
+| Перегляд товарів, залишків (`products:read`, `stock:read`) | ✅ | ✅ | ✅ |
+| Реєстрація операцій руху товару (`stock:write`) | ✅ | ✅ | ✅ |
+| Завантаження файлів (`files:write`) | ✅ | ✅ | ✅ |
+| Створення/редагування товарів (`products:write`) | ❌ | ✅ | ✅ |
+| Категорії, постачальники, склади (`catalog:write`) | ❌ | ✅ | ✅ |
+| Видалення товарів (`products:delete`) | ❌ | ❌ | ✅ |
+| Видалення файлів (`files:delete`) | ❌ | ✅ | ✅ |
+| Видалення категорій/постачальників/складів (`catalog:delete`) | ❌ | ❌ | ✅ |
+| Керування користувачами (`users:manage`) | ❌ | ❌ | ✅ |
+| Журнал аудиту (`audit:read`) | ❌ | ❌ | ✅ |
 
 Публічна реєстрація створює користувача з роллю `WORKER`; вищі ролі видає адміністратор.
 
@@ -204,19 +260,6 @@ Authorization: Bearer <your-jwt-token>
 
 ## 📝 Приклади запитів
 
-### Реєстрація користувача
-```http
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "email": "newuser@example.com",
-  "password": "Password123",
-  "firstName": "Іван",
-  "lastName": "Іваненко"
-}
-```
-
 ### Вхід користувача
 ```http
 POST /api/auth/login
@@ -227,6 +270,26 @@ Content-Type: application/json
   "password": "Manager123"
 }
 ```
+
+### Вхід з 2FA (другий крок)
+```http
+POST /api/auth/2fa/verify
+Content-Type: application/json
+
+{
+  "tempToken": "<tempToken з відповіді login>",
+  "code": "123456"
+}
+```
+
+### Відновлення пароля
+```http
+POST /api/auth/forgot-password
+Content-Type: application/json
+
+{ "email": "admin@warehouse.com" }
+```
+Відповідь завжди `200` (не розкриває існування email). Лист з одноразовим посиланням діє 15 хвилин; у режимі розробки (без SMTP) переглядається за посиланням у консолі сервера (Ethereal).
 
 ### Створення товару (адмін, менеджер)
 ```http
@@ -246,19 +309,17 @@ Content-Type: application/json
 }
 ```
 
-### Надходження товару на склад
-```http
-POST /api/movements
-Authorization: Bearer <token>
-Content-Type: application/json
+### Завантаження кількох файлів
+```bash
+curl -X POST http://localhost:3000/api/files/upload-multiple \
+  -H "Authorization: Bearer <token>" \
+  -F "files=@a.png" -F "files=@b.pdf"
+```
 
-{
-  "type": "INBOUND",
-  "productId": 1,
-  "warehouseId": 1,
-  "quantity": 50,
-  "note": "Поставка №123"
-}
+### Журнал аудиту (тільки адмін)
+```http
+GET /api/audit-logs?action=auth.&page=1&limit=10
+Authorization: Bearer <admin-token>
 ```
 
 ### Отримання товарів з фільтрацією
@@ -266,16 +327,12 @@ Content-Type: application/json
 GET /api/products?page=1&limit=10&categoryId=1&search=ESP&sortBy=price&order=asc
 ```
 
-### Журнал операцій за період
-```http
-GET /api/movements?type=OUTBOUND&warehouseId=1&from=2026-10-01&to=2026-10-31
-```
-
 ## 🛠 Доступні npm scripts
 
 ```bash
 npm start          # Запуск продакшн сервера
-npm run dev        # Запуск в режимі розробки (з nodemon)
+npm run dev        # Запуск в режимі розробки (node --watch)
+npm test           # Запуск тестів (потрібна запущена БД)
 npm run db:migrate # Застосування міграцій БД
 npm run db:generate # Генерація Prisma клієнта
 npm run db:seed    # Заповнення БД тестовими даними
@@ -286,13 +343,18 @@ npm run db:reset   # Скидання БД
 ## 🗄 Схема бази даних
 
 ### Основні таблиці:
-- **users** - користувачі системи
+- **users** - користувачі системи (включно з `twoFactorSecret`/`twoFactorEnabled` для 2FA)
 - **categories** - категорії товарів
 - **suppliers** - постачальники
 - **warehouses** - склади
 - **products** - товари
 - **stocks** - залишки товарів на складах
-- **stock_movements** - журнал руху товарів
+- **stock_movements** - журнал руху товарів (незмінний)
+- **files** - завантажені файли
+- **refresh_tokens** - хеші refresh-токенів (для відкликання)
+- **audit_logs** - журнал дій користувачів
+- **password_reset_tokens** - одноразові хеші токенів скидання пароля
+- **oauth_accounts** - прив'язки акаунтів зовнішніх провайдерів (GitHub)
 
 ### Зв'язки:
 - Категорія може мати багато товарів (1:N)
@@ -300,6 +362,9 @@ npm run db:reset   # Скидання БД
 - Користувач може виконати багато операцій руху товарів (1:N)
 - Склад може мати багато операцій руху товарів (1:N)
 - Товар може зберігатися на багатьох складах, а склад — містити багато товарів (N:M через stocks)
+- Користувач має багато refresh-токенів, файлів, записів аудиту (1:N)
+- Користувач може мати кілька OAuth-акаунтів (1:N)
+- Кожен токен скидання пароля належить користувачу (N:1)
 
 ## 🔧 Налаштування розробки
 
@@ -322,17 +387,22 @@ npx prisma migrate reset
 
 ## 🚨 Безпека
 
-- Паролі хешуються за допомогою bcryptjs (12 rounds)
-- JWT токени мають термін дії 24 години
+- Паролі хешуються за допомогою **argon2id**
+- Access токен живе 15 хвилин, refresh - 7 днів; refresh зберігається в БД (хеш) і може бути відкликаний
+- Ротація refresh-токенів + виявлення повторного використання (відкликання всіх сесій)
+- Rate limiting: 100 зап./15 хв на все API та посилений ліміт (за замовчуванням 20 зап./15 хв) на `/api/auth/*`
+- Відновлення пароля: у БД лише хеш одноразового токена (15 хв), відповідь завжди 200, після скидання відкликаються всі сесії
+- 2FA (TOTP): секрет зберігається в БД, ніколи не повертається після налаштування
+- Невдалі спроби входу логуються в журнал аудиту (з IP)
 - Валідація всіх вхідних даних; зайві поля в тілі запиту ігноруються
-- CORS налаштований для безпеки
-- Helmet.js для додаткової безпеки заголовків
-- Хеш пароля ніколи не повертається в відповідях
+- Helmet.js для безпечних HTTP-заголовків, CORS з обмеженням методів/заголовків
+- Хеш пароля та секрет 2FA ніколи не повертаються у відповідях
+- Файли: білий список MIME-типів + розширення, обмеження розміру; при помилці БД завантажені файли видаляються
 
 ## 📊 Валідація
 
 ### Пароль повинен містити:
-- Від 6 до 72 символів
+- Від 8 до 72 символів
 - Принаймні одну малу літеру
 - Принаймні одну велику літеру
 - Принаймні одну цифру
@@ -349,6 +419,11 @@ npx prisma migrate reset
 ### Операція руху товару
 - `INBOUND` / `OUTBOUND`: `quantity` >= 1
 - `ADJUSTMENT`: `quantity` != 0 (зі знаком + або -)
+
+### Файли
+- Дозволені типи: JPEG, PNG, GIF, PDF (перевіряється і MIME, і розширення)
+- Розмір: до 5 МБ (за замовчуванням, `MAX_FILE_SIZE`)
+- Кількість: до 10 файлів за раз у `upload-multiple`
 
 ## 🔍 Обробка помилок
 
@@ -370,10 +445,11 @@ API повертає структуровані помилки з відпові
 | Код | Значення |
 |---|---|
 | 400 | Помилка валідації |
-| 401 | Немає або недійсний токен |
+| 401 | Немає або недійсний токен / невірний код 2FA |
 | 403 | Недостатньо прав |
 | 404 | Запис не знайдено |
 | 409 | Конфлікт (дублікат, недостатньо товару на складі, запис використовується) |
+| 429 | Перевищено ліміт запитів (rate limiting) |
 | 500 | Внутрішня помилка сервера |
 
 ## 📈 Пагінація

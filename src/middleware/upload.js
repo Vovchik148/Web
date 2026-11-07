@@ -36,3 +36,11 @@ export const upload = multer({
   fileFilter,
   limits: { fileSize: Number(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024, files: 1 },
 });
+
+// Другий екземпляр для багатофайлового завантаження: обмеження files: 1 немає,
+// кількість файлів обмежує сам маршрут (upload.array('files', 10))
+export const uploadMany = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: Number(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024 },
+});

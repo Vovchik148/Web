@@ -2,13 +2,14 @@ import express from "express";
 import { body, query } from "express-validator";
 import * as ctrl from "../controllers/userController.js";
 import { authenticate} from "../middleware/auth.js";
-import { authorize } from "../middleware/authorize.js";
+import { requirePermission } from "../middleware/requirePermission.js";
+import { PERMISSIONS } from "../config/permissions.js";
 import validate from "../middleware/validate.js";
 import { idParam, paginationRules, searchRule } from "../utils/validators.js";
 
 const router = express.Router();
 
-router.use(authenticate, authorize("ADMIN"));
+router.use(authenticate, requirePermission(PERMISSIONS.USERS_READ));
 
 /**
  * @swagger
@@ -64,6 +65,7 @@ router.get(
  */
 router.put(
   "/:id",
+  requirePermission(PERMISSIONS.USERS_MANAGE),
   [
     idParam(),
     body("role").optional().isIn(["ADMIN", "MANAGER", "WORKER"]).withMessage("role: ADMIN, MANAGER або WORKER"),

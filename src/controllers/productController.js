@@ -2,6 +2,7 @@ import { matchedData } from "express-validator";
 import productModel from "../models/product.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { logAction } from "../utils/audit.js";
 import { parsePagination, buildPagination } from "../utils/pagination.js";
 
 // Додає totalQuantity - сумарний залишок по всіх складах
@@ -42,16 +43,21 @@ const getById = asyncHandler(async (req, res) => {
 
 const create = asyncHandler(async (req, res) => {
   const product = await productModel.create(matchedData(req, { locations: ["body"] }));
+  logAction(req, "product.create", { entity: "product", entityId: product.id, details: { sku: product.sku, name: product.name } });
   res.status(201).json(serialize(product));
 });
 
 const update = asyncHandler(async (req, res) => {
   const product = await productModel.update(req.params.id, matchedData(req, { locations: ["body"] }));
+  logAction(req, "product.update", { entity: "product", entityId: product.id, details: { sku: product.sku } });
   res.json(serialize(product));
 });
 
 const remove = asyncHandler(async (req, res) => {
+  const product = await productModel.findById(req.params.id);
+  if (!product) throw new ApiError(404, "Товар не знайдено");
   await productModel.remove(req.params.id);
+  logAction(req, "product.delete", { entity: "product", entityId: product.id, details: { sku: product.sku } });
   res.status(204).send();
 });
 

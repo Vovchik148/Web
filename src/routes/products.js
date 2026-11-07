@@ -2,7 +2,8 @@ import express from "express";
 import { body, query } from "express-validator";
 import * as ctrl from "../controllers/productController.js";
 import { authenticate} from "../middleware/auth.js";
-import { authorize } from "../middleware/authorize.js";
+import { requirePermission } from "../middleware/requirePermission.js";
+import { PERMISSIONS } from "../config/permissions.js";
 import validate from "../middleware/validate.js";
 import { idParam, maybe, paginationRules, searchRule } from "../utils/validators.js";
 
@@ -121,7 +122,7 @@ router.get("/:id", idParam(), validate, ctrl.getById);
  *       403: { description: Недостатньо прав }
  *       409: { description: Товар із таким sku вже існує }
  */
-router.post("/", authorize("ADMIN", "MANAGER"), productRules(), validate, ctrl.create);
+router.post("/", requirePermission(PERMISSIONS.PRODUCTS_WRITE), productRules(), validate, ctrl.create);
 
 /**
  * @swagger
@@ -156,7 +157,7 @@ router.post("/", authorize("ADMIN", "MANAGER"), productRules(), validate, ctrl.c
  *       403: { description: Недостатньо прав }
  *       404: { description: Товар не знайдено }
  */
-router.put("/:id", authorize("ADMIN", "MANAGER"), idParam(), productRules(true), validate, ctrl.update);
+router.put("/:id", requirePermission(PERMISSIONS.PRODUCTS_WRITE), idParam(), productRules(true), validate, ctrl.update);
 
 /**
  * @swagger
@@ -174,6 +175,6 @@ router.put("/:id", authorize("ADMIN", "MANAGER"), idParam(), productRules(true),
  *       403: { description: Недостатньо прав }
  *       404: { description: Товар не знайдено }
  */
-router.delete("/:id", authorize("ADMIN"), idParam(), validate, ctrl.remove);
+router.delete("/:id", requirePermission(PERMISSIONS.PRODUCTS_DELETE), idParam(), validate, ctrl.remove);
 
 export default router;

@@ -8,6 +8,7 @@ const publicSelect = {
   lastName: true,
   role: true,
   isActive: true,
+  twoFactorEnabled: true, // сам секрет twoFactorSecret ніколи не віддаємо клієнту
   createdAt: true,
   updatedAt: true,
 };

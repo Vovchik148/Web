@@ -15,4 +15,11 @@ export default {
   nodeEnv: process.env.NODE_ENV || "development",
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "24h",
+  // URL фронтенду: куди повертаємо користувача після OAuth
+  frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
+  // Зовнішня адреса API - для формування redirect_uri OAuth
+  appUrl: process.env.APP_URL || "http://localhost:3000",
+  // Суворий ліміт для /api/auth (брутфорс-захист), значення беруться з .env
+  authRateLimitWindowMinutes: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MINUTES) || 15,
+  authRateLimitMax: Number(process.env.AUTH_RATE_LIMIT_MAX) || 20,
 };

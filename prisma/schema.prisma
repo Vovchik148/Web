@@ -27,12 +27,20 @@ model User {
   lastName  String
   role      Role     @default(WORKER)
   isActive  Boolean  @default(true)
+
+  // Двофакторна автентифікація (TOTP): секрет зберігаємо в БД, включається лише після підтвердження кодом
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  movements StockMovement[]
-  files File[]
-  refreshTokens RefreshToken[]
+  movements            StockMovement[]
+  files                File[]
+  refreshTokens        RefreshToken[]
+  passwordResetTokens  PasswordResetToken[]
+  auditLogs            AuditLog[]
+  oauthAccounts        OAuthAccount[]
 
   @@map("users")
 }
@@ -151,6 +159,55 @@ model File {
 
   @@index([uploadedBy])
   @@map("files")
+}
+
+// Журнал дій користувачів (незмінний, як і stock_movements)
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?     // null - дія без автентифікованого користувача (наприклад, невдалий вхід)
+  action    String   // наприклад "auth.login", "product.create"
+  entity    String?  // назва сутності: "user", "product", "file" тощо
+  entityId  String?  // id сутності рядком - щоб логувати і нецілі числові ідентифікатори
+  ip        String?
+  details   Json?    // довільні деталі дії (що змінено, з яким email тощо)
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// Одноразові токени скидання пароля: у БД зберігаємо лише хеш
+model PasswordResetToken {
+  id        Int       @id @default(autoincrement())
+  tokenHash String    @unique
+  userId    Int
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// Прив'язка облікового запису зовнішнього провайдера (наприклад, GitHub) до користувача
+model OAuthAccount {
+  id                Int    @id @default(autoincrement())
+  provider          String // "github", "google" тощо
+  providerAccountId String // id користувача в провайдері
+  userId            Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("oauth_accounts")
 }
 
 model RefreshToken {

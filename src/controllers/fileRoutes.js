@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { uploadFile, getFile, updateFile, deleteFile } from "../controllers/fileController.js";
+import { uploadFile, uploadFiles, getFile, updateFile, deleteFile } from "../controllers/fileController.js";
 import { authenticate } from "../middleware/auth.js";
-import { upload } from "../middleware/upload.js";
+import { upload, uploadMany } from "../middleware/upload.js";
 
 const router = Router();
 
@@ -27,6 +27,35 @@ const router = Router();
  *       401: { description: Необхідна аутентифікація }
  */
 router.post("/upload", authenticate, upload.single("file"), uploadFile);
+
+/**
+ * @swagger
+ * /api/files/upload-multiple:
+ *   post:
+ *     summary: Завантаження кількох файлів (до 10)
+ *     description: >
+ *       Поле форми files може містити кілька файлів. Якщо під час запису
+ *       в базу даних сталася помилка - усі вже збережені файли видаляються
+ *       (файли та записи не «осиротівають»).
+ *     tags: [Files]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items: { type: string, format: binary }
+ *     responses:
+ *       201: { description: Файли успішно завантажено }
+ *       400: { description: Файли не надано або невалідні }
+ *       401: { description: Необхідна аутентифікація }
+ */
+router.post("/upload-multiple", authenticate, uploadMany.array("files", 10), uploadFiles);
 
 /**
  * @swagger
