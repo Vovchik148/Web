@@ -1,10 +1,11 @@
 import { matchedData } from "express-validator";
 import stockModel from "../models/stock.js";
-import productModel from "../models/product.js";
-import { serialize as serializeProduct } from "./productController.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { parsePagination, buildPagination } from "../utils/pagination.js";
+import { publishEvent } from "../services/realtime.js";
+import { notifyLowStock } from "../services/notificationService.js";
+import { logAction } from "../utils/audit.js";
 
 // GET /api/stock - поточні залишки (фільтр за товаром / складом)
 const getStocks = asyncHandler(async (req, res) => {
@@ -23,15 +24,11 @@ const getStocks = asyncHandler(async (req, res) => {
   res.json({ data, pagination: buildPagination(page, limit, total) });
 });
 
-// GET /api/stock/low - товари, сумарний залишок яких нижчий за minStock
+// GET /api/stock/low - товари, сумарний залишок яких нижчий за minStock.
+// Оптимізовано: один агрегатний SQL-запит на рівні БД замість завантаження
+// всіх товарів з залишками та фільтрації в JS (див. stockModel.findLowStockProducts).
 const getLowStock = asyncHandler(async (req, res) => {
-  const products = await productModel.findAllWithMinStock();
-
-  const data = products
-    .map((p) => serializeProduct(p))
-    .filter((p) => p.totalQuantity < p.minStock)
-    .map((p) => ({ ...p, deficit: p.minStock - p.totalQuantity }));
-
+  const data = await stockModel.findLowStockProducts();
   res.json({ data, total: data.length });
 });
 
@@ -66,9 +63,35 @@ const getMovementById = asyncHandler(async (req, res) => {
 });
 
 // POST /api/movements - нова операція (оновлює залишок)
+// Після транзакції розсилає події реального часу в кімнату складу
+// та генерує сповіщення про низький залишок (якщо він виник).
 const createMovement = asyncHandler(async (req, res) => {
   const data = matchedData(req, { locations: ["body"] });
   const movement = await stockModel.applyMovement({ ...data, userId: req.user.id });
+
+  const room = `warehouse:${movement.warehouseId}`;
+
+  // stock:updated - новий залишок цього товару на цьому складі
+  const stock = await stockModel.findStock(movement.productId, movement.warehouseId);
+  publishEvent(room, "stock:updated", {
+    productId: movement.productId,
+    warehouseId: movement.warehouseId,
+    quantity: stock.quantity,
+    updatedAt: stock.updatedAt,
+  });
+
+  // movement:created - сама операція (для живого журналу руху)
+  publishEvent(room, "movement:created", movement);
+  logAction(req, "movement.create", { entity: "movement", entityId: movement.id, details: { type: movement.type, productId: movement.productId } });
+
+  // Сповіщення про низький залишок: сума по всіх складах проти minStock
+  const { _sum } = await stockModel.getTotalQuantity(movement.productId);
+  const totalQuantity = _sum.quantity ?? 0;
+  const product = await stockModel.findProductForStockCheck(movement.productId);
+  if (product && totalQuantity < product.minStock) {
+    await notifyLowStock(product, totalQuantity);
+  }
+
   res.status(201).json(movement);
 });
 

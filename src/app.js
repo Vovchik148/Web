@@ -9,6 +9,7 @@ import { swaggerSpecs } from "./config/swagger.js";
 import ApiError from "./utils/ApiError.js";
 import routes from "./routes/index.js";
 import errorHandler from "./middleware/errorHandler.js";
+import { register, metricsMiddleware } from "./utils/metrics.js";
 
 const app = express();
 
@@ -55,6 +56,19 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// Метрики Prometheus (рівень 3): тривалість і лічильники HTTP-запитів.
+// Розташовано після rate limit-ів /api, щоб /metrics не лімітувався.
+app.use(metricsMiddleware);
+
+// Ендпоінт моніторингу: читається Prometheus/Grafana (GET /metrics)
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.end(await register.metrics());
+});
+
+// Легкий health-check без звернення до БД (для health check-ів на хостингу)
+app.get("/health", (req, res) => res.json({ status: "ok", uptime: process.uptime() }));
+
 // --- Документація Swagger ---
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
@@ -62,10 +76,11 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 app.get("/", (req, res) => {
   res.json({
     name: "Warehouse Inventory API",
-    version: "1.0.0",
+    version: "2.0.0",
     endpoints: {
       docs: "/api-docs",
       health: "/api/health",
+      metrics: "/metrics",
       auth: "/api/auth",
       users: "/api/users",
       categories: "/api/categories",
@@ -74,6 +89,8 @@ app.get("/", (req, res) => {
       products: "/api/products",
       stock: "/api/stock",
       movements: "/api/movements",
+      notifications: "/api/notifications",
+      websocket: "/socket.io (див. docs/WEBSOCKET_API.md)",
     },
   });
 });

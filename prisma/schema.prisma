@@ -19,6 +19,21 @@ enum MovementType {
   ADJUSTMENT // коригування за результатами інвентаризації (кількість зі знаком +/-)
 }
 
+enum NotificationType {
+  LOW_STOCK // залишок товару впав нижче мінімального
+  MOVEMENT  // нова операція з товаром
+  SYSTEM    // системні повідомлення
+  PRODUCT   // зміни в каталозі товарів
+}
+
+// Пріоритети сповіщень: клієнт може сортувати/підсвічувати за ними
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -41,6 +56,7 @@ model User {
   passwordResetTokens  PasswordResetToken[]
   auditLogs            AuditLog[]
   oauthAccounts        OAuthAccount[]
+  notifications        Notification[]
 
   @@map("users")
 }
@@ -122,6 +138,7 @@ model Stock {
   warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
 
   @@unique([productId, warehouseId])
+  @@index([warehouseId]) // фільтр залишків за одним складом
   @@map("stocks")
 }
 
@@ -143,6 +160,9 @@ model StockMovement {
   @@index([productId])
   @@index([warehouseId])
   @@index([createdAt])
+  // Складені індекси для журналів руху: фільтр за товаром/складом + сортування за датою
+  @@index([productId, createdAt])
+  @@index([warehouseId, createdAt])
   @@map("stock_movements")
 }
 
@@ -194,6 +214,41 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+// Сховище сповіщень: створюються сервісом при важливих подіях
+// (низький залишок, зміни товарів тощо) і доставляються в реальному часі через WebSocket
+model Notification {
+  id        Int                  @id @default(autoincrement())
+  userId    Int
+  type      NotificationType
+  priority  NotificationPriority @default(NORMAL)
+  title     String
+  message   String
+  data      Json?                // довільні деталі (id товару, дефіцит тощо)
+  readAt    DateTime?            // null - сповіщення не прочитане
+  createdAt DateTime             @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt]) // «непрочитані» та лічильник unread
+  @@index([userId, createdAt]) // список сповіщень користувача
+  @@map("notifications")
+}
+
+// Історія подій реального часу з порядковим номером (id):
+// після перепідключення клієнт надсилає останній отриманий _seq
+// і отримує все, що сталося далі (events:sync)
+model EventLog {
+  id        Int      @id @default(autoincrement())
+  type      String   // "stock.updated", "product.created" тощо
+  room      String   // кімната розсилки: "warehouse:1", "products", "user:5"
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([room, id]) // вибірка пропущених подій кімнати після останнього seq
+  @@index([createdAt])
+  @@map("event_logs")
 }
 
 // Прив'язка облікового запису зовнішнього провайдера (наприклад, GitHub) до користувача

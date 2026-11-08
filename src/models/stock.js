@@ -38,6 +38,46 @@ export default {
   findMovementById: (id) =>
     prisma.stockMovement.findUnique({ where: { id }, include: movementInclude }),
 
+  findStock: (productId, warehouseId) =>
+    prisma.stock.findUnique({
+      where: { productId_warehouseId: { productId, warehouseId } },
+    }),
+
+  // Сумарний залишок товару по всіх складах (для перевірки мінімального залишку)
+  getTotalQuantity: (productId) =>
+    prisma.stock.aggregate({ where: { productId }, _sum: { quantity: true } }),
+
+  findProductForStockCheck: (productId) =>
+    prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true, sku: true, name: true, unit: true, minStock: true },
+    }),
+
+  /**
+   * Товари із залишком нижче мінімального - «сирим» SQL одним агрегатним
+   * запитом (оптимізація). Попередня реалізація завантажувала ВСІ товари
+   * разом із залишками (include stocks) і фільтрувала в JS: база віддавала
+   * набагато більше даних, ніж потрібно. Тут фільтрація і агрегація
+   * виконуються на рівні PostgreSQL (JOIN + GROUP BY + HAVING).
+   */
+  findLowStockProducts: () =>
+    prisma.$queryRaw`
+      SELECT
+        p.id,
+        p.sku,
+        p.name,
+        p.unit,
+        p."minStock",
+        COALESCE(SUM(s.quantity), 0)::int AS "totalQuantity",
+        p."minStock" - COALESCE(SUM(s.quantity), 0)::int AS deficit
+      FROM products p
+      LEFT JOIN stocks s ON s.product_id = p.id
+      WHERE p."isActive" = true AND p."minStock" > 0
+      GROUP BY p.id
+      HAVING COALESCE(SUM(s.quantity), 0) < p."minStock"
+      ORDER BY deficit DESC
+    `,
+
   /**
    * Реєструє рух товару і змінює залишок в ОДНІЙ транзакції:
    * або виконаються обидві дії, або жодна.

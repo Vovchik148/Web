@@ -12,6 +12,7 @@ import productRoutes from "./products.js";
 import stockRoutes from "./stock.js";
 import movementRoutes from "./movements.js";
 import auditRoutes from "./audit.js";
+import notificationRoutes from "./notifications.js";
 
 const router = express.Router();
 
@@ -43,4 +44,5 @@ router.use("/stock", stockRoutes);
 router.use("/movements", movementRoutes);
 router.use("/files", fileRoutes);
 router.use("/audit-logs", auditRoutes);
+router.use("/notifications", notificationRoutes);
 export default router;

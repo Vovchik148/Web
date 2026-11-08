@@ -16,5 +16,21 @@ services:
       timeout: 5s
       retries: 5
 
+  # Redis (лабораторна робота 3): кеш, черги фонових задач,
+  # Redis-адаптер Socket.io для горизонтального масштабування
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
+  redis_data:

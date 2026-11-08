@@ -8,6 +8,9 @@
 - **Express.js 5** - веб-фреймворк
 - **PostgreSQL** - реляційна база даних
 - **Prisma** - ORM для роботи з базою даних
+- **Socket.io 4** - обмін даними в реальному часі (WebSocket + автоперез'єднання)
+- **Redis (ioredis)** - кеш, черги фонових задач (BullMQ), Redis-адаптер Socket.io
+- **prom-client** - метрики Prometheus (`/metrics`)
 - **JWT (jsonwebtoken)** - автентифікація: короткоживучий access + refresh з ротацією та відкликанням
 - **argon2** - хешування паролів
 - **express-rate-limit** - обмеження кількості запитів
@@ -36,6 +39,21 @@
 - ✅ Swagger-документація (`/api-docs`)
 - ✅ Тести (node:test + supertest)
 
+### Реальний час та інфраструктура (лабораторна робота 3)
+
+- ✅ **Socket.io**: WebSocket-події для всіх основних сутностей (товари, категорії, постачальники, склади, залишки, рухи) - [docs/WEBSOCKET_API.md](./docs/WEBSOCKET_API.md)
+- ✅ **Автентифікація WebSocket** за JWT access-токеном у handshake
+- ✅ **Кімнати**: персональна `user:<id>`, кімнати каталогу та кімнати окремих складів `warehouse:<id>`
+- ✅ **Система сповіщень** з типами та пріоритетами: зберігання в БД + доставка в реальному часі, REST API (`/api/notifications`), batch-розсилка через чергу
+- ✅ **Онлайн-статус** користувачів (presence) з підтримкою кількох вкладок
+- ✅ **Відновлення пропущених подій** після перепідключення (`events:sync` за порядковим номером `_seq`, історія в таблиці `event_logs`)
+- ✅ **Rate limiting подій WebSocket** (токенне відро на сокет)
+- ✅ **Оптимізація БД**: індекси (у т.ч. складені), усунення N+1, кешування списків з інвалідацією, low-stock звіт одним агрегатним SQL-запитом, журналювання SQL (`PRISMA_QUERY_LOG=1` + `EXPLAIN ANALYZE`)
+- ✅ **Черги фонових задач** (BullMQ + Redis, з fallback без Redis)
+- ✅ **Кешування**: Redis або пам'ять процесу (за наявності REDIS_URL)
+- ✅ **Метрики Prometheus** (`/metrics`): HTTP, WebSocket, кеш, БД, черги
+- ✅ **Redis-адаптер Socket.io** для горизонтального масштабування (за кількох екземплярів - sticky sessions, див. [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md))
+
 ## 🗂 Структура проєкту
 
 ```
@@ -47,16 +65,19 @@ warehouse-backend/
 │   ├── middleware/          # Проміжні обробники (auth, дозволи, upload, валідація)
 │   ├── models/              # Моделі (робота з БД через Prisma)
 │   ├── routes/              # Маршрути API
-│   ├── utils/               # Допоміжні функції (jwt, mailer, audit, password)
+│   ├── services/            # Сервіси (realtime, notifications, queue)
+│   ├── socket/              # Socket.io (init, кімнати, presence, rate limiting)
+│   ├── utils/               # Допоміжні функції (jwt, mailer, audit, cache, metrics)
 │   ├── app.js               # Головний файл додатку
-│   └── server.js            # Точка входу
+│   └── server.js            # Точка входу (HTTP-сервер + Socket.io)
 ├── prisma/
 │   ├── migrations/          # Міграції бази даних
 │   ├── schema.prisma        # Схема бази даних
 │   └── seed.js              # Файл для заповнення тестовими даними
-├── tests/                   # Тести (node:test + supertest)
+├── docs/                    # Документація (WebSocket API, розгортання)
+├── tests/                   # Тести (node:test + supertest + socket.io-client)
 ├── reports/                 # Звіти лабораторних робіт
-├── docker-compose.yml       # PostgreSQL у Docker
+├── docker-compose.yml       # PostgreSQL + Redis у Docker
 ├── api_documantion.md       # Докладна документація API
 └── .env.example             # Приклад змінних середовища
 ```
@@ -104,6 +125,20 @@ APP_URL=http://localhost:3000     # зовнішня адреса API (для OA
 # GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET - OAuth App з github.com/settings/developers
 ```
 
+Додатково для лабораторної роботи 3 (усі є в `.env.example`):
+
+```env
+REDIS_URL=redis://localhost:6379  # кеш, черги, Redis-адаптер Socket.io (необов'язково)
+PRISMA_QUERY_LOG=0                # 1 - журналювання SQL-запитів для аналізу
+WS_RATE_LIMIT_EVENTS=30           # ліміт подій WebSocket на сокет
+WS_RATE_LIMIT_WINDOW_MS=1000
+```
+
+Запустіть PostgreSQL та Redis у Docker:
+```bash
+docker compose up -d
+```
+
 Запустіть PostgreSQL у Docker:
 ```bash
 docker compose up -d
@@ -130,7 +165,13 @@ npm run dev
 npm start
 ```
 
-Сервер буде доступний за адресою: `http://localhost:3000`, Swagger UI: `http://localhost:3000/api-docs`
+Сервер буде доступний за адресою: `http://localhost:3000`, Swagger UI: `http://localhost:3000/api-docs`, метрики: `http://localhost:3000/metrics`
+
+## 📡 Документація
+
+- [docs/WEBSOCKET_API.md](./docs/WEBSOCKET_API.md) - повний опис WebSocket API: підключення, автентифікація, кімнати, події, відновлення після перепідключення
+- [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) - розгортання на Render: обмеження безкоштовного тарифу, sticky sessions, автоматичне масштабування
+- [api_documantion.md](./api_documantion.md) - REST API
 
 ### 6. Тести
 ```bash

@@ -4,6 +4,14 @@ import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { logAction } from "../utils/audit.js";
 import { parsePagination, buildPagination } from "../utils/pagination.js";
+import { publishEvent } from "../services/realtime.js";
+import cache from "../utils/cache.js";
+
+// Зміни товарів транслюються в кімнату "products" (події product:created|updated|deleted)
+const broadcast = (action, payload) => publishEvent("products", `product:${action}`, payload);
+
+// Кеш списку товарів інвалідується при будь-якій зміні каталогу
+const invalidateCache = () => cache.delPrefix("product:list");
 
 // Додає totalQuantity - сумарний залишок по всіх складах
 const serialize = (product, { withStocks = false } = {}) => {
@@ -44,12 +52,16 @@ const getById = asyncHandler(async (req, res) => {
 const create = asyncHandler(async (req, res) => {
   const product = await productModel.create(matchedData(req, { locations: ["body"] }));
   logAction(req, "product.create", { entity: "product", entityId: product.id, details: { sku: product.sku, name: product.name } });
+  invalidateCache();
+  broadcast("created", serialize(product)); // подія product:created у кімнату products
   res.status(201).json(serialize(product));
 });
 
 const update = asyncHandler(async (req, res) => {
   const product = await productModel.update(req.params.id, matchedData(req, { locations: ["body"] }));
   logAction(req, "product.update", { entity: "product", entityId: product.id, details: { sku: product.sku } });
+  invalidateCache();
+  broadcast("updated", serialize(product)); // подія product:updated
   res.json(serialize(product));
 });
 
@@ -58,6 +70,8 @@ const remove = asyncHandler(async (req, res) => {
   if (!product) throw new ApiError(404, "Товар не знайдено");
   await productModel.remove(req.params.id);
   logAction(req, "product.delete", { entity: "product", entityId: product.id, details: { sku: product.sku } });
+  invalidateCache();
+  broadcast("deleted", { id: product.id, sku: product.sku }); // подія product:deleted
   res.status(204).send();
 });
 

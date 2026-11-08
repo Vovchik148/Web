@@ -81,7 +81,10 @@ export const getFile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Файл не знайдено");
   }
 
-  res.sendFile(path.resolve(file.path));
+  // dotfiles: "allow" - шлях береться з БД (не з URL користувача), а проєкт
+  // може бути розгорнутий у прихованій теці (наприклад .zcode\workspace), яку
+  // send за замовчуванням блокує
+  res.sendFile(path.resolve(file.path), { dotfiles: "allow" });
 });
 
 export const updateFile = asyncHandler(async (req, res) => {
