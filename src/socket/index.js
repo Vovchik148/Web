@@ -144,9 +144,13 @@ export function initSocket(httpServer) {
       import("ioredis"),
     ])
       .then(([{ createAdapter }, { default: Redis }]) => {
-        // Адаптеру потрібні два з'єднання: pub і sub
-        adapterClients.pub = new Redis(process.env.REDIS_URL);
-        adapterClients.sub = new Redis(process.env.REDIS_URL);
+        // Адаптеру потрібні два з'єднання: pub і sub.
+        // Обробник error обов'язковий, інакше ioredis попереджає про
+        // некеровану помилку при розриві з'єднання
+        const onError = (client) => (err) =>
+          console.error(`[socket] Помилка Redis-адаптера (${client}):`, err.message);
+        adapterClients.pub = new Redis(process.env.REDIS_URL).on("error", onError("pub"));
+        adapterClients.sub = new Redis(process.env.REDIS_URL).on("error", onError("sub"));
         io.adapter(createAdapter(adapterClients.pub, adapterClients.sub));
         console.log("[socket] Redis-адаптер увімкнено (горизонтальне масштабування)");
       })
