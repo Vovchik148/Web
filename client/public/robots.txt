@@ -10,4 +10,4 @@ Disallow: /suppliers
 Disallow: /login
 Disallow: /register
 
-Sitemap: https://your-app.vercel.app/sitemap.xml
+Sitemap: https://web-gamma-bice-43.vercel.app//sitemap.xml

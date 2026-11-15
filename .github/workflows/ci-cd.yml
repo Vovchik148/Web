@@ -111,8 +111,11 @@ jobs:
       - name: Встановлення Vercel CLI
         run: npm install --global vercel@latest
 
+      - name: Перевірка токена (vercel whoami)
+        run: vercel whoami --token=${{ secrets.VERCEL_TOKEN }}
+
       - name: Отримання налаштувань проєкту (з env Vercel)
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production --debug --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Збірка
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
