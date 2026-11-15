@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --env-file=.env --watch src/server.js",
-    "test": "node --env-file=.env --env-file=.env.test --test \"tests/**/*.test.js\"",
+    "test": "node --env-file-if-exists=.env --env-file-if-exists=.env.test --test \"tests/**/*.test.js\"",
     "db:seed": "node --env-file=.env prisma/seed.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
