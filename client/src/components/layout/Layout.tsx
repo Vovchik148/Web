@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, useLocation } from 'react-router';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import { useAuthStore } from '@/stores/authStore';
+import { useSocketConnection } from '@/hooks/useSocketConnection';
+import { usePresenceSync } from '@/hooks/usePresenceSync';
 import Footer from './Footer';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -13,6 +15,14 @@ export default function Layout() {
   const [isCollapsed, setIsCollapsed] = useState(false); // десктоп: розгорнута/іконки
   const [isDrawerOpen, setDrawerOpen] = useState(false); // мобільний: панель відкрита
   const isAuthenticated = useAuthStore((state) => state.accessToken !== null);
+
+  // Одне з'єднання Socket.io на весь застосунок + синхронізація онлайн-статусів
+  useSocketConnection();
+  usePresenceSync();
+
+  // Анімація переходу між сторінками (рівень 2): key=pathname перестворює
+  // контейнер при кожній навігації, CSS-анімація дає плавний фейд
+  const location = useLocation();
 
   return (
     <div className="flex min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
@@ -43,7 +53,9 @@ export default function Layout() {
 
         <main className="container mx-auto w-full flex-grow px-4 py-6">
           <ErrorBoundary>
-            <Outlet />
+            <div key={location.pathname} className="animate-fade-slide">
+              <Outlet />
+            </div>
           </ErrorBoundary>
         </main>
 

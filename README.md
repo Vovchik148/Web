@@ -1,8 +1,14 @@
-# Система обліку інвентарю на складі — Backend API
+# Warehouse Inventory — повноцінний full-stack вебзастосунок
 
-Серверна частина системи обліку інвентарю на складі, розроблена з використанням Node.js, Express.js та PostgreSQL.
+> Облік інвентарю на складі: серверна частина (Node.js + Express + PostgreSQL + Socket.io)
+> та клієнтська частина (React 19 + TypeScript + Vite + Tailwind CSS 4) з реальним часом,
+> PWA, CI/CD та розгортанням у робочому середовищі.
 
-## 🚀 Технології
+- **Клієнт:** https://<твій-сервіс>.vercel.app (Vercel)
+- **API:** https://<твій-сервіс>.onrender.com (Render + Neon)
+- **Swagger API:** https://<твій-сервіс>.onrender.com/api-docs
+
+## 🚀 Технології (серверна частина)
 
 - **Node.js** - серверне середовище JavaScript
 - **Express.js 5** - веб-фреймворк
@@ -169,15 +175,16 @@ npm start
 
 Сервер буде доступний за адресою: `http://localhost:3000`, Swagger UI: `http://localhost:3000/api-docs`, метрики: `http://localhost:3000/metrics`
 
-## 💻 Клієнтська частина (лабораторні роботи 4-5)
+## 💻 Клієнтська частина (лабораторні роботи 4-6)
 
 Клієнтська частина на React 19 + TypeScript + Vite 8 + Tailwind CSS 4 знаходиться в теці [`client/`](./client). Повна інструкція: [client/README.md](./client/README.md).
 
 ```bash
 cd client
 npm install
-cp .env.example .env   # адреса API: http://localhost:3000/api
+cp .env.example .env   # VITE_API_URL: http://localhost:3000/api, VITE_SOCKET_URL: http://localhost:3000
 npm run dev            # http://localhost:5173 (серверна частина має бути запущеною)
+npm test               # тести компонентів (Vitest)
 ```
 
 Можливості клієнта:
@@ -186,7 +193,13 @@ npm run dev            # http://localhost:5173 (серверна частина 
 - **Лаб. 5**: аутентифікація (JWT, Zustand), захищені маршрути, панель керування,
   CRUD товарів і довідників (React Hook Form + Zod 4), керування користувачами (ADMIN),
   TanStack Query + toast, пошук/debounce, сортування, пагінація, скелетони завантаження,
-  бічна панель, хлібні крихти, детальні сторінки товарів.
+  бічна панель, хлібні крихти, детальні сторінки товарів;
+- **Лаб. 6**: реальний час (Socket.io: дзвіночок сповіщень, presence, автооновлення
+  списків), Headless UI (модальні вікна, таби, Combobox), drag and drop (dnd-kit),
+  графіки (Recharts), нескінченне прокручування журналу + календар, завантаження
+  зображень з обрізанням, Rich text редактор (Tiptap), анімації переходів,
+  код-спліттінг (lazy маршрути), PWA з офлайн-режимом, SEO/Open Graph,
+  тести компонентів (Vitest), CI/CD (GitHub Actions) та розгортання на Vercel.
 
 Тестові облікові записи (після `npm run db:seed`): `admin@warehouse.com / Admin123`,
 `manager@warehouse.com / Manager123`, `worker@warehouse.com / Worker123`.

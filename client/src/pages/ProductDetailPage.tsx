@@ -20,10 +20,11 @@ import Button from '@/components/common/Button';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import FormField from '@/components/common/FormField';
 import Input from '@/components/common/Input';
+import Tabs from '@/components/common/Tabs';
 import { DetailSkeleton } from '@/components/common/Skeleton';
 
-// Детальна сторінка товару (рівень 3): вся інформація + залишки по складах
-// + форма операції руху (єдиний спосіб зміни залишку) + останні рухи.
+// Детальна сторінка товару (рівень 3): таби Headless UI (лаб. 6) —
+// інформація / залишки з операціями / історія рухів.
 export default function ProductDetailPage() {
   const id = Number(useParams<{ id: string }>().id);
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export default function ProductDetailPage() {
 
   const { data: recentMovements } = useQuery({
     queryKey: ['movements', id],
-    queryFn: () => movementsService.getByProduct(id, 5),
+    queryFn: () => movementsService.getByProduct(id, 10),
     enabled: Number.isInteger(id) && id > 0,
   });
 
@@ -95,6 +96,17 @@ export default function ProductDetailPage() {
             <Badge variant={product.isActive ? 'success' : 'neutral'}>
               {product.isActive ? 'активний' : 'неактивний'}
             </Badge>
+            <Badge
+              variant={
+                product.totalQuantity > product.minStock
+                  ? 'success'
+                  : product.totalQuantity > 0
+                    ? 'warning'
+                    : 'danger'
+              }
+            >
+              залишок: {product.totalQuantity} {product.unit}
+            </Badge>
           </p>
         </div>
         <div className="flex gap-2">
@@ -107,94 +119,32 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <DetailItem label="Категорія">{product.category?.name ?? '—'}</DetailItem>
-          <DetailItem label="Постачальник">{product.supplier?.name ?? '—'}</DetailItem>
-          <DetailItem label="Ціна">{formatPrice(product.price)}</DetailItem>
-          <DetailItem label="Мінімальний залишок">
-            {product.minStock} {product.unit}
-          </DetailItem>
-          <DetailItem label="Сумарний залишок">
-            <Badge
-              variant={
-                product.totalQuantity > product.minStock
-                  ? 'success'
-                  : product.totalQuantity > 0
-                    ? 'warning'
-                    : 'danger'
-              }
-            >
-              {product.totalQuantity} {product.unit}
-            </Badge>
-          </DetailItem>
-          <DetailItem label="Створено">{formatDate(product.createdAt)}</DetailItem>
-          <DetailItem label="Оновлено">{formatDate(product.updatedAt)}</DetailItem>
-        </dl>
-
-        {product.description && (
-          <div className="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
-            <h2 className="mb-2 text-sm font-semibold uppercase text-gray-500">Опис</h2>
-            <p className="text-gray-700 dark:text-gray-300">{product.description}</p>
-          </div>
-        )}
-
-        {/* Залишки по складах (GET /api/products/:id повертає stocks з warehouse) */}
-        {Array.isArray(product.stocks) && (
-          <div className="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
-            <h2 className="mb-2 text-sm font-semibold uppercase text-gray-500">
-              Залишки на складах
-            </h2>
-            <ul className="space-y-1">
-              {product.stocks.map((stock, index) => (
-                <li key={stock.warehouse?.id ?? index} className="flex justify-between text-sm">
-                  <span>{stock.warehouse?.name ?? `Склад #${index + 1}`}</span>
-                  <span className="font-medium">
-                    {stock.quantity} {product.unit}
-                  </span>
-                </li>
-              ))}
-              {product.stocks.length === 0 && (
-                <li className="text-gray-500">Товар ще не розміщено на складах</li>
-              )}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {/* Операція руху: єдиний спосіб зміни залишку (журнал незмінний - audit trail) */}
-      <StockMovementForm productId={product.id} unit={product.unit} stocks={product.stocks ?? []} />
-
-      {/* Останні рухи цього товару */}
-      {recentMovements && recentMovements.data.length > 0 && (
-        <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">Останні рухи</h2>
-          <ul className="space-y-2">
-            {recentMovements.data.map((movement) => (
-              <li key={movement.id} className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  <Badge
-                    variant={
-                      movement.type === 'INBOUND'
-                        ? 'success'
-                        : movement.type === 'OUTBOUND'
-                          ? 'danger'
-                          : 'warning'
-                    }
-                  >
-                    {movement.type}
-                  </Badge>
-                  <span>
-                    {movement.type === 'ADJUSTMENT' && movement.quantity > 0 ? '+' : ''}
-                    {movement.quantity} шт · {movement.warehouse?.name ?? '—'}
-                  </span>
-                </span>
-                <span className="text-gray-400">{formatDate(movement.createdAt)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* Таби (Headless UI, рівень 1): контент розділено по вкладках */}
+      <Tabs
+        tabs={[
+          {
+            label: 'Інформація',
+            content: <ProductInfoTab product={product} />,
+          },
+          {
+            label: 'Залишки та операції',
+            content: (
+              <div className="space-y-6">
+                <StocksTab product={product} />
+                <StockMovementForm
+                  productId={product.id}
+                  unit={product.unit}
+                  stocks={product.stocks ?? []}
+                />
+              </div>
+            ),
+          },
+          {
+            label: 'Історія рухів',
+            content: <MovementsHistoryTab movements={recentMovements?.data ?? []} unit={product.unit} />,
+          },
+        ]}
+      />
 
       <ConfirmModal
         isOpen={confirmOpen}
@@ -208,11 +158,51 @@ export default function ProductDetailPage() {
   );
 }
 
-function DetailItem({ label, children }: { label: string; children: ReactNode }) {
+function ProductInfoTab({ product }: { product: NonNullable<Awaited<ReturnType<typeof productsService.getById>>> }) {
   return (
-    <div>
-      <dt className="text-xs font-medium uppercase text-gray-500">{label}</dt>
-      <dd className="mt-1">{children}</dd>
+    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <DetailItem label="Категорія">{product.category?.name ?? '—'}</DetailItem>
+        <DetailItem label="Постачальник">{product.supplier?.name ?? '—'}</DetailItem>
+        <DetailItem label="Ціна">{formatPrice(product.price)}</DetailItem>
+        <DetailItem label="Мінімальний залишок">
+          {product.minStock} {product.unit}
+        </DetailItem>
+        <DetailItem label="Створено">{formatDate(product.createdAt)}</DetailItem>
+        <DetailItem label="Оновлено">{formatDate(product.updatedAt)}</DetailItem>
+      </dl>
+
+      {product.description && (
+        <div className="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <h2 className="mb-2 text-sm font-semibold uppercase text-gray-500">Опис</h2>
+          {/* description - HTML з Tiptap-редактора (лаб. 6); схему Tiptap не пропускає скрипти */}
+          <div
+            className="text-gray-700 [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:text-lg [&_h3]:font-bold [&_li]:ml-5 [&_ol]:list-decimal [&_ol]:pl-2 [&_p]:my-1 [&_strong]:font-bold [&_ul]:list-disc [&_ul]:pl-2 dark:text-gray-300"
+            dangerouslySetInnerHTML={{ __html: product.description }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StocksTab({ product }: { product: NonNullable<Awaited<ReturnType<typeof productsService.getById>>> }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">Залишки на складах</h2>
+      <ul className="space-y-1">
+        {(product.stocks ?? []).map((stock, index) => (
+          <li key={stock.warehouse?.id ?? index} className="flex justify-between text-sm">
+            <span>{stock.warehouse?.name ?? `Склад #${index + 1}`}</span>
+            <span className="font-medium">
+              {stock.quantity} {product.unit}
+            </span>
+          </li>
+        ))}
+        {(product.stocks ?? []).length === 0 && (
+          <li className="text-gray-500">Товар ще не розміщено на складах</li>
+        )}
+      </ul>
     </div>
   );
 }
@@ -254,7 +244,7 @@ function StockMovementForm({
     mutationFn: (data: MovementFormData) => movementsService.create({ ...data, productId }),
     onSuccess: async (movement) => {
       toast.success(
-        `Операцію ${movement.type} на ${movement.quantity} ${unit} виконано (склад "${movement.warehouse?.name}")`
+        `Операцію ${movement.type} на ${movement.quantity} ${unit} виконано (склад "${movement.warehouse?.name}")`,
       );
       // Оновлюємо детальну інформацію (залишки), список товарів та історію рухів
       await Promise.all([
@@ -267,7 +257,7 @@ function StockMovementForm({
   });
 
   return (
-    <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <h2 className="mb-1 text-sm font-semibold uppercase text-gray-500">Операція зі складом</h2>
       <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
         Залишок змінюється лише через операцію руху - кожна зміна фіксується в незмінному журналі
@@ -326,6 +316,68 @@ function StockMovementForm({
           </Button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function MovementsHistoryTab({
+  movements,
+  unit,
+}: {
+  movements: Array<{
+    id: number;
+    type: 'INBOUND' | 'OUTBOUND' | 'ADJUSTMENT';
+    quantity: number;
+    note: string | null;
+    warehouse?: { name: string };
+    createdAt: string;
+  }>;
+  unit: string;
+}) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">Останні рухи</h2>
+      {movements.length === 0 ? (
+        <p className="text-gray-500 dark:text-gray-400">Рухів ще не було</p>
+      ) : (
+        <ul className="space-y-3">
+          {movements.map((movement) => (
+            <li key={movement.id} className="flex items-start justify-between gap-3 text-sm">
+              <span className="flex items-center gap-2">
+                <Badge
+                  variant={
+                    movement.type === 'INBOUND'
+                      ? 'success'
+                      : movement.type === 'OUTBOUND'
+                        ? 'danger'
+                        : 'warning'
+                  }
+                >
+                  {movement.type}
+                </Badge>
+                <span>
+                  {movement.type === 'INBOUND' && '+'}
+                  {movement.type === 'OUTBOUND' && '−'}
+                  {movement.quantity} {unit} · {movement.warehouse?.name ?? '—'}
+                  {movement.note && (
+                    <span className="ml-2 text-gray-400">({movement.note})</span>
+                  )}
+                </span>
+              </span>
+              <span className="whitespace-nowrap text-gray-400">{formatDate(movement.createdAt)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function DetailItem({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <dt className="text-xs font-medium uppercase text-gray-500">{label}</dt>
+      <dd className="mt-1">{children}</dd>
     </div>
   );
 }

@@ -6,10 +6,11 @@ import App from './App';
 import './index.css';
 
 // TanStack Query: staleTime 30 с - дані вважаються свіжими і не перезапитуються,
-// retry 1 - одна повторна спроба при збої запиту
+// retry 1 - одна повторна спроба при збої запиту. Це також клієнтське кешування
+// запитів (рівень 3): повторні переходи віддаються з кешу миттєво.
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { staleTime: 30_000, retry: 1 },
+    queries: { staleTime: 30_000, retry: 1, gcTime: 5 * 60_000 },
   },
 });
 

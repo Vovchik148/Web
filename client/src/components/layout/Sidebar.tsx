@@ -19,6 +19,7 @@ const LINKS: SidebarLink[] = [
   { to: ROUTES.HOME, label: 'Каталог', icon: '📦' },
   { to: '/dashboard', label: 'Панель', icon: '📊' },
   { to: '/products', label: 'Товари', icon: '🏷️' },
+  { to: '/movements', label: 'Журнал рухів', icon: '📋' },
   { to: '/categories', label: 'Категорії', icon: '📁' },
   { to: '/warehouses', label: 'Склади', icon: '🏭' },
   { to: '/suppliers', label: 'Постачальники', icon: '🚚' },

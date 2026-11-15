@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import { productsService, type ProductsQuery } from '@/services/products.service';
 import { categoriesService } from '@/services/catalog.services';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useSocketRoom } from '@/hooks/useSocketRoom';
+import { useSocketEvent } from '@/hooks/useSocketEvent';
 import { getErrorMessage } from '@/utils/getErrorMessage';
 import type { Product } from '@/types/api.types';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
@@ -38,6 +40,15 @@ export default function ProductsListPage() {
 
   const debouncedSearch = useDebounce(search);
   const queryClient = useQueryClient();
+
+  // Реальний час (лаб. 6): приєднуємось до кімнати "products" і перезавантажуємо
+  // список, коли сервер повідомляє про зміни (створення іншим користувачем,
+  // рух товару на складі тощо). Сервер - джерело істини, подія -> invalidateQueries.
+  useSocketRoom('products');
+  useSocketEvent('product:created', () => queryClient.invalidateQueries({ queryKey: ['products'] }));
+  useSocketEvent('product:updated', () => queryClient.invalidateQueries({ queryKey: ['products'] }));
+  useSocketEvent('product:deleted', () => queryClient.invalidateQueries({ queryKey: ['products'] }));
+  useSocketEvent('stock:updated', () => queryClient.invalidateQueries({ queryKey: ['products'] }));
 
   const filters = {
     search: debouncedSearch || undefined,

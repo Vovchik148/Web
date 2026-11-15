@@ -1,0 +1,126 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # Серверна частина: лінт (через build), міграції і тести проти реальної БД
+  server:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: warehouse_user
+          POSTGRES_PASSWORD: warehouse_password
+          POSTGRES_DB: warehouse_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U warehouse_user"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://warehouse_user:warehouse_password@localhost:5432/warehouse_db?schema=public
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-secret-server-tests-only
+      JWT_EXPIRES_IN: 15m
+      REFRESH_TOKEN_SECRET: ci-refresh-secret-server-tests-only
+      REFRESH_TOKEN_EXPIRES_IN: 7d
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Налаштування Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Встановлення залежностей
+        run: npm ci
+
+      - name: Генерація Prisma Client
+        run: npx prisma generate
+
+      - name: Застосування міграцій
+        run: npx prisma migrate deploy
+
+      - name: Збірка сервера
+        run: npm run build
+
+      - name: Тести серверної частини (node:test)
+        run: npm test
+
+  # Клієнтська частина: лінтинг, тести компонентів (Vitest), збірка
+  client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Налаштування Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Встановлення залежностей
+        run: npm ci
+
+      - name: Лінтинг
+        run: npm run lint
+
+      - name: Тести компонентів (Vitest)
+        run: npm test
+
+      - name: Збірка (з тестовими змінними VITE_*)
+        run: npm run build
+        env:
+          VITE_API_URL: https://ci-placeholder-api.example.com/api
+          VITE_SOCKET_URL: https://ci-placeholder-api.example.com
+
+  # Розгортання клієнта на Vercel: лише після успішних перевірок і лише з main
+  deploy:
+    needs: [server, client]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Встановлення Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Отримання налаштувань проєкту (з env Vercel)
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Збірка
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Розгортання
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}

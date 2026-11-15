@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router';
@@ -14,9 +14,14 @@ import { categoriesService, suppliersService } from '@/services/catalog.services
 import { getErrorMessage } from '@/utils/getErrorMessage';
 import type { Product } from '@/types/api.types';
 import Button from '@/components/common/Button';
+import ComboboxField from '@/components/common/ComboboxField';
 import FormField from '@/components/common/FormField';
 import Input from '@/components/common/Input';
+import ImageUploader from '@/components/common/ImageUploader';
 import { DetailSkeleton } from '@/components/common/Skeleton';
+
+// Розширений редактор опису (Tiptap) важкий - lazy в окремий chunk (рівень 3)
+const RichTextEditor = lazy(() => import('@/components/common/RichTextEditor'));
 
 // Форма товару, спільна для створення й редагування.
 // editId: undefined -> створення; число -> редагування (дані підвантажуються в defaultValues).
@@ -24,7 +29,7 @@ export function ProductForm({ editId }: { editId?: number }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Довідники для select'ів
+  // Довідники для Combobox'ів (випадне меню з пошуком - лабораторна робота 6)
   const { data: categories } = useQuery({
     queryKey: ['categories', 'for-form'],
     queryFn: () => categoriesService.getAll({ limit: 100 }),
@@ -33,6 +38,15 @@ export function ProductForm({ editId }: { editId?: number }) {
     queryKey: ['suppliers', 'for-form'],
     queryFn: () => suppliersService.getAll({ limit: 100 }),
   });
+
+  const categoryOptions = (categories?.data ?? []).map((c) => ({
+    value: String(c.id),
+    label: c.name,
+  }));
+  const supplierOptions = (suppliers?.data ?? []).map((s) => ({
+    value: String(s.id),
+    label: s.name,
+  }));
 
   // При редагуванні - завантаження запису у форму
   const { data: existing, isPending: isProductLoading } = useQuery({
@@ -45,10 +59,12 @@ export function ProductForm({ editId }: { editId?: number }) {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<ProductFormInput, unknown, ProductFormData>({
     resolver: zodResolver(productSchema),
-    defaultValues: { isActive: true, unit: 'шт' },
+    defaultValues: { isActive: true, unit: 'шт', description: '' },
   });
 
   useEffect(() => {
@@ -82,13 +98,24 @@ export function ProductForm({ editId }: { editId?: number }) {
         <Input placeholder="Папір A4 (500 арк.)" {...register('name')} />
       </FormField>
 
-      <FormField label="Опис (необов'язково)" error={errors.description?.message}>
-        <textarea
-          rows={3}
-          className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800"
-          {...register('description')}
-        />
-      </FormField>
+      <div>
+        <span className="mb-1 block text-sm font-medium">
+          Опис (необов'язково — можна форматувати текст)
+        </span>
+        {/* Важкий редактор - lazy + Suspense (код спліттінг) */}
+        <Suspense fallback={<div className="h-32 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />}>
+          <RichTextEditor
+            value={(watch('description') as string) ?? ''}
+            onChange={(html) => setValue('description', html)}
+            placeholder="Форматований опис товару: список характеристик, жирний шрифт тощо"
+          />
+        </Suspense>
+        {errors.description && (
+          <span role="alert" className="mt-1 block text-sm text-red-500">
+            {errors.description.message}
+          </span>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <FormField label="Ціна (грн)" error={errors.price?.message}>
@@ -103,38 +130,37 @@ export function ProductForm({ editId }: { editId?: number }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField label="Категорія" error={errors.categoryId?.message}>
-          <select
-            className="w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
-            {...register('categoryId')}
-          >
-            <option value="">Оберіть категорію...</option>
-            {categories?.data.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </FormField>
-        <FormField label="Постачальник (необов'язково)" error={errors.supplierId?.message}>
-          <select
-            className="w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
-            {...register('supplierId')}
-          >
-            <option value="">Без постачальника</option>
-            {suppliers?.data.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </FormField>
+        {/* Випадне меню з пошуком (Headless UI Combobox, рівень 1) */}
+        <ComboboxField
+          label="Категорія"
+          value={String((watch('categoryId') as string) ?? '')}
+          onChange={(value) => setValue('categoryId', value)}
+          options={categoryOptions}
+          placeholder="Пошук категорії..."
+          error={errors.categoryId?.message}
+        />
+        <ComboboxField
+          label="Постачальник (необов'язково)"
+          value={String((watch('supplierId') as string) ?? '')}
+          onChange={(value) => setValue('supplierId', value)}
+          options={supplierOptions}
+          placeholder="Пошук постачальника..."
+          error={errors.supplierId?.message}
+        />
       </div>
 
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" className="h-4 w-4" {...register('isActive')} />
         Активний товар (доступний для оприбуткування)
       </label>
+
+      {/* Завантаження зображення з обрізанням (рівень 2) -> файловий сервіс лаб. 2 */}
+      <div className="rounded border border-dashed border-gray-300 p-4 dark:border-gray-600">
+        <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+          Зображення товару (зберігається у файловому сховищі сервера):
+        </p>
+        <ImageUploader />
+      </div>
 
       <div className="flex gap-4">
         <Button type="submit" isLoading={mutation.isPending}>

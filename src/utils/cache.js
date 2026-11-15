@@ -15,7 +15,8 @@ let redis = null;
 let connecting = false;
 
 /**
- * Єдине підключення до Redis для всього застосунку (кеш, черги).
+ * Єдине підключення до Redis для кешу. Черги BullMQ використовують власні
+ * з'єднання (services/queue.js) - BullMQ вимагає maxRetriesPerRequest: null.
  * Якщо REDIS_URL не заданий або Redis недоступний - повертає null,
  * і всі механізми коректно працюють без нього.
  */

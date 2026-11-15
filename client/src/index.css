@@ -13,6 +13,22 @@
   }
 }
 
+/* Анімація переходу між сторінками (рівень 2): плавний фейд + зсув */
+@keyframes fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide {
+  animation: fade-slide 0.25s ease-out;
+}
+
 /* Власна тема: основний колір застосунку та типографіка */
 @theme {
   --color-primary-50: #eff6ff;

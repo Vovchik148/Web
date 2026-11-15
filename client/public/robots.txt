@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /products
+Disallow: /movements
+Disallow: /users
+Disallow: /categories
+Disallow: /warehouses
+Disallow: /suppliers
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://your-app.vercel.app/sitemap.xml

@@ -1,5 +1,4 @@
 import { queueJobsTotal } from "../utils/metrics.js";
-import { getRedis } from "../utils/cache.js";
 
 // Система черг для фонових задач (BullMQ поверх Redis).
 //
@@ -9,13 +8,17 @@ import { getRedis } from "../utils/cache.js";
 //
 // Без Redis (не заданий REDIS_URL) черга деградує чесно:
 // задачі виконуються одразу у фоні того ж процесу.
+//
+// Увага: BullMQ вимагає з'єднання з maxRetriesPerRequest: null, тому черга
+// має ВЛАСНІ Redis-з'єднання (не спільні з кешем, де обмежено ретраї).
 
 const QUEUE_NAME = "background";
 
 const handlers = new Map(); // назва задачі -> обробник
 let queue = null;
 let worker = null;
-let initTried = false;
+let queueReady = null; // Promise ініціалізації, щоб enqueue міг дочекатися
+
 
 /**
  * Реєструє обробник фонової задачі. Викликається сервісами при імпорті.
@@ -26,15 +29,19 @@ export const registerJob = (name, handler) => {
   handlers.set(name, handler);
 };
 
-const initQueue = () => {
-  if (initTried || queue) return;
-  initTried = true;
+// Лінива ініціалізація: черга і воркер створюються один раз на процес
+const initQueue = async () => {
+  if (process.env.REDIS_URL) {
+    try {
+      const [{ Queue, Worker }, { default: Redis }] = await Promise.all([
+        import("bullmq"),
+        import("ioredis"),
+      ]);
 
-  const connection = getRedis();
-  if (!connection) return; // без Redis BullMQ не піднімаємо
+      // BullMQ: maxRetriesPerRequest обов'язково null
+      const connection = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
+      connection.on("error", (err) => console.error("[queue] Помилка Redis:", err.message));
 
-  Promise.all([import("bullmq")])
-    .then(([{ Queue, Worker }]) => {
       queue = new Queue(QUEUE_NAME, { connection });
 
       // Воркер у тому ж процесі: для лабораторної роботи цього достатньо,
@@ -56,8 +63,16 @@ const initQueue = () => {
       });
 
       console.log("[queue] Черга BullMQ запущена");
-    })
-    .catch((err) => console.error("[queue] Не вдалося ініціалізувати BullMQ:", err.message));
+    } catch (err) {
+      console.error("[queue] BullMQ не ініціалізовано (fallback на пряме виконання):", err.message);
+      queue = null;
+    }
+  }
+};
+
+const ensureQueue = () => {
+  if (!queueReady) queueReady = initQueue();
+  return queueReady;
 };
 
 /**
@@ -71,7 +86,7 @@ export const enqueue = async (name, data) => {
     return;
   }
 
-  initQueue();
+  await ensureQueue();
 
   if (queue) {
     try {

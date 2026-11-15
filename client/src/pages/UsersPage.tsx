@@ -3,6 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import toast from 'react-hot-toast';
 import { usersService } from '@/services/catalog.services';
 import { useAuthStore } from '@/stores/authStore';
+import { usePresenceStore } from '@/stores/presenceStore';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getErrorMessage } from '@/utils/getErrorMessage';
 import type { Role, User } from '@/types/api.types';
@@ -25,6 +26,9 @@ export default function UsersPage() {
   const debouncedSearch = useDebounce(search);
   const [deactivating, setDeactivating] = useState<User | null>(null);
   const queryClient = useQueryClient();
+
+  // Онлайн-статуси в реальному часі: presenceStore синхронізується у Layout
+  const isOnline = usePresenceStore((state) => state.isOnline);
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['users', { page, search: debouncedSearch }],
@@ -102,6 +106,14 @@ export default function UsersPage() {
                   <tr key={user.id}>
                     <td className="px-4 py-3">{user.id}</td>
                     <td className="px-4 py-3">
+                      {/* Онлайн-статус у реальному часі (Socket.io presence, лаб. 3+6) */}
+                      <span
+                        aria-label={isOnline(user.id) ? 'онлайн' : 'офлайн'}
+                        title={isOnline(user.id) ? 'Онлайн' : 'Офлайн'}
+                        className={`mr-2 inline-block h-2.5 w-2.5 rounded-full ${
+                          isOnline(user.id) ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'
+                        }`}
+                      />
                       {user.firstName} {user.lastName}
                       {user.id === me.id && (
                         <span className="ml-2 text-xs text-gray-400">(ви)</span>

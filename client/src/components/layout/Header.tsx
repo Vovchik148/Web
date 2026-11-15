@@ -4,6 +4,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/authStore';
 import { authService } from '@/services/auth.service';
 import Button from '@/components/common/Button';
+import NotificationBell from '@/components/NotificationBell';
 
 interface HeaderProps {
   onOpenSidebar: () => void; // мобільний: відкрити бічну панель
@@ -40,6 +41,8 @@ export default function Header({ onOpenSidebar }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-4">
+          {user && <NotificationBell />}
+
           <button
             type="button"
             onClick={toggleTheme}
