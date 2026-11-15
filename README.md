@@ -169,7 +169,7 @@ npm start
 
 Сервер буде доступний за адресою: `http://localhost:3000`, Swagger UI: `http://localhost:3000/api-docs`, метрики: `http://localhost:3000/metrics`
 
-## 💻 Клієнтська частина (лабораторна робота 4)
+## 💻 Клієнтська частина (лабораторні роботи 4-5)
 
 Клієнтська частина на React 19 + TypeScript + Vite 8 + Tailwind CSS 4 знаходиться в теці [`client/`](./client). Повна інструкція: [client/README.md](./client/README.md).
 
@@ -180,8 +180,16 @@ cp .env.example .env   # адреса API: http://localhost:3000/api
 npm run dev            # http://localhost:5173 (серверна частина має бути запущеною)
 ```
 
-Можливості клієнта (лаб. 4): каталог товарів з живими даними API, адаптивна навігація,
-темна тема, сторінки Home / About / NotFound, Error Boundary, ESLint + Prettier.
+Можливості клієнта:
+- **Лаб. 4**: каталог товарів з живими даними API, адаптивна навігація, темна тема,
+  сторінки Home / About / NotFound, Error Boundary, ESLint + Prettier;
+- **Лаб. 5**: аутентифікація (JWT, Zustand), захищені маршрути, панель керування,
+  CRUD товарів і довідників (React Hook Form + Zod 4), керування користувачами (ADMIN),
+  TanStack Query + toast, пошук/debounce, сортування, пагінація, скелетони завантаження,
+  бічна панель, хлібні крихти, детальні сторінки товарів.
+
+Тестові облікові записи (після `npm run db:seed`): `admin@warehouse.com / Admin123`,
+`manager@warehouse.com / Manager123`, `worker@warehouse.com / Worker123`.
 
 ## 📡 Документація
 

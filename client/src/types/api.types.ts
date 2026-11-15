@@ -36,6 +36,13 @@ export interface Warehouse {
   stockItemsCount?: number;
 }
 
+// Залишок товару на складі у детальній відповіді GET /api/products/:id
+export interface ProductStockInfo {
+  quantity: number;
+  updatedAt: string;
+  warehouse?: Pick<Warehouse, 'id' | 'name'>;
+}
+
 // Decimal з PostgreSQL сервер серіалізує у JSON як рядок
 export interface Product {
   id: number;
@@ -51,6 +58,7 @@ export interface Product {
   category?: Pick<Category, 'id' | 'name'>;
   supplier?: Pick<Supplier, 'id' | 'name'> | null;
   totalQuantity: number;
+  stocks?: ProductStockInfo[]; // лише в детальній відповіді
   createdAt: string;
   updatedAt: string;
 }
@@ -94,4 +102,22 @@ export interface PaginatedResponse<T> {
 export interface ApiError {
   error: string;
   message: string;
+}
+
+// Відповідь аутентифікації (лабораторна робота 2): { message, user, tokens }.
+// Для акаунтів з 2FA login повертає twoFactorRequired + tempToken замість токенів.
+export interface AuthResponse {
+  message: string;
+  user: User;
+  tokens: { accessToken: string; refreshToken: string };
+  twoFactorRequired?: boolean;
+  tempToken?: string;
+}
+
+// Дані для реєстрації (confirmPassword на сервер не надсилається)
+export interface RegisterPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
 }

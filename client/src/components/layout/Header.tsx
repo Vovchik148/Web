@@ -1,26 +1,45 @@
-import { useState } from 'react';
-import { Link } from 'react-router';
-import { APP_NAME, NAV_ITEMS } from '@/constants';
+import { Link, useNavigate } from 'react-router';
+import { APP_NAME } from '@/constants';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuthStore } from '@/stores/authStore';
+import { authService } from '@/services/auth.service';
+import Button from '@/components/common/Button';
 
-export default function Header() {
+interface HeaderProps {
+  onOpenSidebar: () => void; // мобільний: відкрити бічну панель
+}
+
+export default function Header({ onOpenSidebar }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    const { refreshToken, logout } = useAuthStore.getState();
+    await authService.logout(refreshToken); // відкликання refresh-токена на сервері
+    logout(); // очищення локальної сесії; ProtectedRoute сам redirect-ить на /login
+    navigate('/login');
+  };
 
   return (
     <header className="bg-white shadow-md dark:bg-gray-900">
-      <nav className="container mx-auto flex items-center justify-between px-4 py-4">
-        <Link to="/" className="text-2xl font-bold text-primary-600">
-          {APP_NAME}
-        </Link>
+      <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-center gap-3">
+          {/* Бургер: на мобільних відкриває бічну панель (на десктопі панель постійна) */}
+          <button
+            type="button"
+            onClick={onOpenSidebar}
+            aria-label="Відкрити меню"
+            className="rounded p-1 text-2xl md:hidden"
+          >
+            ☰
+          </button>
+          <Link to="/" className="text-2xl font-bold text-primary-600">
+            {APP_NAME}
+          </Link>
+        </div>
 
-        {/* Навігація для десктопу (sm і ширше) */}
-        <div className="hidden items-center gap-6 sm:flex">
-          {NAV_ITEMS.map((item) => (
-            <Link key={item.to} to={item.to} className="hover:text-primary-600">
-              {item.label}
-            </Link>
-          ))}
+        <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={toggleTheme}
@@ -29,45 +48,28 @@ export default function Header() {
           >
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-        </div>
 
-        {/* Кнопка бургер-меню для мобільних */}
-        <div className="flex items-center gap-3 sm:hidden">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label="Перемкнути тему"
-            className="text-lg"
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setMenuOpen((open) => !open)}
-            aria-label="Меню"
-            aria-expanded={menuOpen}
-            className="rounded p-1 text-2xl"
-          >
-            {menuOpen ? '✕' : '☰'}
-          </button>
+          {user ? (
+            <>
+              <span className="hidden text-sm text-gray-500 sm:inline dark:text-gray-400">
+                {user.firstName} {user.lastName} ({user.role})
+              </span>
+              <Button size="sm" variant="secondary" onClick={() => void handleLogout()}>
+                Вийти
+              </Button>
+            </>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link to="/login" className="text-sm hover:text-primary-600">
+                Увійти
+              </Link>
+              <Link to="/register">
+                <Button size="sm">Реєстрація</Button>
+              </Link>
+            </div>
+          )}
         </div>
-      </nav>
-
-      {/* Мобільне меню */}
-      {menuOpen && (
-        <nav className="border-t border-gray-200 px-4 py-3 sm:hidden dark:border-gray-700">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              onClick={() => setMenuOpen(false)}
-              className="block py-2 hover:text-primary-600"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      )}
+      </div>
     </header>
   );
 }
