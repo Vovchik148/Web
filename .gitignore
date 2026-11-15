@@ -4,5 +4,5 @@ node_modules/
 .DS_Store
 uploads/
 src/generated/
-.vercel
+/.vercel
 .env*
