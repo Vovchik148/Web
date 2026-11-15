@@ -42,6 +42,7 @@ export default function ComboboxField({
     <div>
       <span className="mb-1 block text-sm font-medium">{label}</span>
       <Combobox
+        immediate
         value={selected}
         onChange={(opt) => onChange(opt ? opt.value : '')}
         onClose={() => setQuery('')}

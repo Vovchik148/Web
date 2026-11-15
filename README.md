@@ -4,9 +4,9 @@
 > та клієнтська частина (React 19 + TypeScript + Vite + Tailwind CSS 4) з реальним часом,
 > PWA, CI/CD та розгортанням у робочому середовищі.
 
-- **Клієнт:** https://<твій-сервіс>.vercel.app (Vercel)
-- **API:** https://<твій-сервіс>.onrender.com (Render + Neon)
-- **Swagger API:** https://<твій-сервіс>.onrender.com/api-docs
+- **Клієнт:** https://web-gamma-bice-43.vercel.app/ (Vercel)
+- **API:** https://warehouse-inventory-api-700g.onrender.com (Render + Neon)
+- **Swagger API:** https://warehouse-inventory-api-700g.onrender.com/api-docs
 
 ## 🚀 Технології (серверна частина)
 
