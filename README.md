@@ -77,6 +77,8 @@ warehouse-backend/
 ├── docs/                    # Документація (WebSocket API, розгортання)
 ├── tests/                   # Тести (node:test + supertest + socket.io-client)
 ├── reports/                 # Звіти лабораторних робіт
+├── scripts/                 # Демонстраційні скрипти (ws-demo)
+├── client/                  # Клієнтська частина (React + TypeScript + Vite, лаб. 4+)
 ├── docker-compose.yml       # PostgreSQL + Redis у Docker
 ├── api_documantion.md       # Докладна документація API
 └── .env.example             # Приклад змінних середовища
@@ -166,6 +168,20 @@ npm start
 ```
 
 Сервер буде доступний за адресою: `http://localhost:3000`, Swagger UI: `http://localhost:3000/api-docs`, метрики: `http://localhost:3000/metrics`
+
+## 💻 Клієнтська частина (лабораторна робота 4)
+
+Клієнтська частина на React 19 + TypeScript + Vite 8 + Tailwind CSS 4 знаходиться в теці [`client/`](./client). Повна інструкція: [client/README.md](./client/README.md).
+
+```bash
+cd client
+npm install
+cp .env.example .env   # адреса API: http://localhost:3000/api
+npm run dev            # http://localhost:5173 (серверна частина має бути запущеною)
+```
+
+Можливості клієнта (лаб. 4): каталог товарів з живими даними API, адаптивна навігація,
+темна тема, сторінки Home / About / NotFound, Error Boundary, ESLint + Prettier.
 
 ## 📡 Документація
 
