@@ -7,9 +7,13 @@ on:
     branches: [main]
 
 jobs:
-  # Серверна частина: лінт (через build), міграції і тести проти реальної БД
+  # Серверна частина: міграції і тести проти реальної БД.
+  # Увага: REDIS_URL у env НЕ задається навмисно - тестовий .env.test має
+  # порожній REDIS_URL, тому черга BullMQ у тестах не піднімається
+  # (fallback виконує задачі одразу) і node:test не висить на worker'і.
   server:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     services:
       postgres:
         image: postgres:15
@@ -24,18 +28,8 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     env:
       DATABASE_URL: postgresql://warehouse_user:warehouse_password@localhost:5432/warehouse_db?schema=public
-      REDIS_URL: redis://localhost:6379
       JWT_SECRET: ci-secret-server-tests-only
       JWT_EXPIRES_IN: 15m
       REFRESH_TOKEN_SECRET: ci-refresh-secret-server-tests-only
@@ -67,6 +61,7 @@ jobs:
   # Клієнтська частина: лінтинг, тести компонентів (Vitest), збірка
   client:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: client
